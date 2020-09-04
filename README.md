@@ -3,7 +3,7 @@ Automatically generates TTS dataset using audio and associated text. Make cuts u
 
 # Setup
 Linux environment is recommended. If using windows aeneas will not be able to make longer cuts due to memory issues. 
-In linux, install aeneas:
+In linux, install aeneas and pydub:
 
 wget https://raw.githubusercontent.com/readbeyond/aeneas/master/install_dependencies.sh
 
@@ -19,4 +19,9 @@ pip install pydub
 
 # Usage
 Place .wav file of source audio and source text file inside main directory.  
+
 Run python corpus_builder.py -input_text name_of_text_file -audio_name name_of_wav_file -output_wav_path output_wavefolder_name -index_start starting_index_number
+
+# Recommendations
+
+Several things will improve the quality of your cuts, although you should always proofread them before training with tacotron. Clean any non english, etc characters from the source text. Examine if things like chapter titles are included. Speakers with slow and even paced speech will make the cleanest cuts, while fast paced speakers tend to run words together and can cause some words, pieces of words, to be shifted into the next cut where it will have to be edited.
