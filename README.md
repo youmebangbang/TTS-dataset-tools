@@ -6,9 +6,13 @@ Linux environment is recommended. If using windows aeneas will not be able to ma
 In linux, install aeneas:
 
 wget https://raw.githubusercontent.com/readbeyond/aeneas/master/install_dependencies.sh
+
 bash install_dependencies.sh
+
 pip install numpy
+
 pip install aeneas
+
 test installation:  python -m aeneas.diagnostics
 
 pip install pydub
