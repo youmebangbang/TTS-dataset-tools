@@ -22,6 +22,8 @@ Place .wav file of source audio and source text file inside main directory.
 
 Run python corpus_builder.py -input_text name_of_text_file -audio_name name_of_wav_file -output_wav_path output_wavefolder_name -index_start starting_index_number
 
+New .wav files will be wrote to output_wav_path.  Csv file of cuts will be wrote to /csv_out
+
 # Recommendations
 
 Several things will improve the quality of your cuts, although you should always proofread them before training with tacotron. Clean any non english, etc characters from the source text. Examine if things like chapter titles are included. Speakers with slow and even paced speech will make the cleanest cuts, while fast paced speakers tend to run words together and can cause some words, pieces of words, to be shifted into the next cut where it will have to be edited.
