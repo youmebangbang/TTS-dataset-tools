@@ -132,14 +132,6 @@ def build(input_text, audio_name, output_wav_path, cut_length, index_start):
 
         new_csv_file.close()
 
-def split_text_in_half(input_text):
-    text_list = input_text.split()
-    split_point = int(len(text_list)/2)
-    split1 = text_list[:split_point]
-    split2 = text_list[split_point:]
-    return split1, split2
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-input_text', '--input_text', type=str,
