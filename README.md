@@ -20,7 +20,7 @@ pip install pydub
 # Usage
 Place .wav file of source audio and source text file inside main directory.  
 
-Run python corpus_builder.py -input_text name_of_text_file -audio_name name_of_wav_file -output_wav_path output_wavefolder_name -index_start starting_index_number
+Run python corpus_builder.py -input_text (name of text_file) -audio_name (name of wav file) -output_wav_path (output wavefolder name) -cut_length (max length of cuts in seconds) -index_start (starting index number)
 
 New .wav files will be wrote to output_wav_path.  Csv file of cuts will be wrote to /csv_out
 
