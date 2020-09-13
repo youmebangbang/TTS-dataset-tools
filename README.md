@@ -1,5 +1,6 @@
 # Automated-TTS-corpus-builder
-Automatically generates TTS dataset using audio and associated text. Make cuts under a custom length. Uses aeneas to force align text to audio.
+Automatically generates TTS dataset using audio and associated text. Make cuts under a custom length. Uses aeneas to force align text to audio. The extender increases tacotron2 corpus by splitting text at , . ? and ! , then producing associated audio splits with aeneas. Use the trimmer to remove any cuts under a certain length.
+
 
 # Setup
 Linux environment is recommended. If using windows aeneas will not be able to make longer cuts due to memory issues. 
@@ -18,11 +19,38 @@ test installation:  python -m aeneas.diagnostics
 pip install pydub
 
 # Usage
-Place .wav file of source audio and source text file inside main directory.  
+## corpus_builder.py: ##
+
+Place .wav file of source audio and source text file inside repo directory.  
 
 Run python corpus_builder.py -input_text (name of text_file) -audio_name (name of wav file) -output_wav_path (output wavefolder name) -cut_length (max length of cuts in seconds) -index_start (starting index number)
 
 New .wav files will be wrote to output_wav_path.  Csv file of cuts will be wrote to /csv_out
+
+## corpus_extender.py: ##
+
+Copy wave files directory into repo directory
+
+Copy source text csv file into directory. Basic tacotron2 format is wave_file_path | text
+
+Run py corpus_extender.py -csv (name of csv file) -input_wav_path (input folder name path) -output_wav_path (output folder name path)
+
+Split waves will be created in output_folder_name_path
+
+New csv file will be created in /csv_out
+
+## corpus_trimmer.py ##
+
+Copy wave files directory into repo directory
+
+Copy source text csv file into directory. 
+
+Run py corpus_trimmer.py -csv (name of csv file) -min_length (minimum cut length in float seconds)
+
+New csv file will be created in /csv_out
+
+Wav files in directory that are too short will be deleted
+
 
 # Recommendations
 
