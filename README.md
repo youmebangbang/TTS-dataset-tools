@@ -27,18 +27,6 @@ Run python corpus_builder.py -input_text (name of text_file) -audio_name (name o
 
 New .wav files will be wrote to output_wav_path.  Csv file of cuts will be wrote to /csv_out
 
-## corpus_extender.py: ##
-
-Copy wave files directory into repo directory
-
-Copy source text csv file into directory. Basic tacotron2 format is wave_file_path | text
-
-Run py corpus_extender.py -csv (name of csv file) -input_wav_path (input folder name path) -output_wav_path (output folder name path)
-
-Split waves will be created in output_folder_name_path
-
-New csv file will be created in /csv_out
-
 ## corpus_trimmer.py ##
 
 Copy wave files directory into repo directory
