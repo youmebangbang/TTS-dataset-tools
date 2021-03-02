@@ -7,16 +7,21 @@ from pydub import AudioSegment
 import csv
 import argparse
 import numpy as np
+import re
 
 class Project:
-    def __init__(self, project_name, speaker_text_path, wav_file_path):    
+    def __init__(self, project_name, speaker_text_path, wav_file_path, index_start, cut_length, contains_punc):    
         self.project_name = project_name
         self.speaker_text_path = speaker_text_path
         self.wav_file_path = wav_file_path
+        self.index_start = index_start
+        self.cut_length = cut_length
+        self.contains_punc = contains_punc
 
     def build_dataset(self):
-        if not os.path.exists("{}_wavs".format(self.project_name)):
-            os.mkdir("{}_wavs".format(self.project_name))      
+        output_wav_path = "{}_wavs/".format(self.project_name)
+        if not os.path.exists(output_wav_path):
+            os.mkdir(output_wav_path)      
         if not os.path.exists("aeneas_out"):
             os.mkdir("aeneas_out")
         if not os.path.exists("aeneas_prepped"):
@@ -24,9 +29,9 @@ class Project:
         if not os.path.exists("csv_out"):
             os.mkdir("csv_out")   
 
-        audio_name = self.wav_file_path    
+        audio_name = self.wav_file_path   
 
-        with open(speaker_text_path, 'r', encoding="utf8") as f:
+        with open(self.speaker_text_path, 'r', encoding="utf8") as f:
             text = f.read()
             text = text.replace(';', '.')
             text = text.replace(':', '.')
@@ -38,11 +43,26 @@ class Project:
             text = text.replace('’', '\'')
             text = text.replace(' –', '.')
             text = text.strip('\n')
-            #remove any duplicate whitespace between words
-            text = " ".join(text.split())
 
-            phrase_splits = re.split(r'(?<=[\.\!\?])\s*', text)   #split on white space between sentences             
-            phrase_splits = list(filter(None, phrase_splits))  #remove empty splits
+            if self.contains_punc:
+                #remove any duplicate whitespace between words
+                text = " ".join(text.split())
+
+                phrase_splits = re.split(r'(?<=[\.\!\?])\s*', text)   #split on white space between sentences             
+                phrase_splits = list(filter(None, phrase_splits))  #remove empty splits
+            else:                
+                #no punctuation from speech to text, so we must divid text by word count
+                phrase_splits = []
+                temp_line = []
+                text_split = text.split()
+                word_count_limit = 16
+         
+                while len(text_split) > 0:
+                    while len(temp_line) < word_count_limit and len(text_split) > 0:
+                        temp_line.append(text_split.pop(0))
+                    phrase_splits.append(" ".join(temp_line))
+                    temp_line = []
+
             with open('aeneas_prepped/split_text', 'w') as f:
                     newline = ''
                     for s in phrase_splits: 
@@ -53,10 +73,10 @@ class Project:
             #os.system('python -m aeneas.tools.execute_task ' + audio_name  + ' aeneas_prepped/split_text "task_adjust_boundary_percent_value=50|task_adjust_boundary_algorithm=percent|task_language=en|is_text_type=plain|os_task_file_format=csv" ' + 'aeneas_out/' + audio_name_no_ext + '.csv')
             os.system('python -m aeneas.tools.execute_task ' + audio_name  + ' aeneas_prepped/split_text "task_adjust_boundary_percent_value=50|task_adjust_boundary_algorithm=percent|task_language=en|is_text_type=plain|os_task_file_format=csv" ' + 'aeneas_out/' + self.project_name + '.csv')
             new_csv_file = open('csv_out/output.csv', 'w')
-
+            
             with open('aeneas_out/' + self.project_name + '.csv', 'r') as csv_file:
                 
-                index_count = index_start
+                index_count = int(self.index_start)
                 csv_reader = csv.reader(csv_file, delimiter=',')
                 csv_reader = list(csv_reader) #convert to list
                 row_count = len(csv_reader) 
@@ -71,6 +91,7 @@ class Project:
                     c_length = end_cut - beginning_cut
             
                     #if cut is longer than cut length then split it even more
+                    cut_length = float(self.cut_length)
                     if c_length > cut_length:    
                                         
                         more_cuts = open("aeneas_prepped/temp.csv", 'w')
@@ -149,18 +170,19 @@ def run_dataset_builder_callback(sender, data):
     #check to see if txt and wav file was selected
     if get_value("input_project_name") and get_value("label_speaker_text_path") and get_value("label_wav_file_path"):
         print("running")
-        myproject = Project(get_value("input_project_name"), get_value("label_speaker_text_path"), get_value("label_wav_file_path"))
+        myproject = Project(get_value("input_project_name"), get_value("label_speaker_text_path")
+        , get_value("label_wav_file_path"), get_value("input_starting_index"), get_value("input_cut_length"), get_value("input_contains_punc"))
         myproject.build_dataset()
     else:
         print("error: enter inputs")
 
 def add_speaker_txt_file(sender, data):
     #open working speaker text
-    set_value("label_speaker_text_path", "File selected: {}\{}".format(data[0], data[1]))
+    set_value("label_speaker_text_path", "{}/{}".format(data[0], data[1]))
 
 def add_speaker_wav_file(sender, data):
     #open working speaker text
-    set_value("label_wav_file_path", "File selected: {}\{}".format(data[0], data[1]))
+    set_value("label_wav_file_path", "{}/{}".format(data[0], data[1]))
 
 set_main_window_size(1200,800)
 set_main_window_title("DeepVoice Dataset Creator 1.0 by YouMeBangBang")
@@ -178,6 +200,19 @@ with window("mainWin"):
             add_text("Enter name of project: ")
             add_same_line(spacing=10)
             add_input_text("input_project_name", width=200, default_value="myproject", label="") 
+            add_spacing(count=5)
+            add_text("Enter starting index (default is 1): ")
+            add_same_line(spacing=10)
+            add_input_text("input_starting_index", width=200, default_value="1", label="")     
+            add_spacing(count=5)
+            add_text("Enter max cut length in seconds (default is 11.0): ")
+            add_same_line(spacing=10)
+            add_input_text("input_cut_length", width=200, default_value="11.0", label="")            
+            add_spacing(count=5)
+
+            add_text("Does the text have proper punctuation? ")
+            add_same_line(spacing=10)
+            add_checkbox("input_contains_punc", default_value=0, label="")                         
             add_spacing(count=5)            
             add_text("Select speaker text file to open: ")
             add_same_line(spacing=10)
