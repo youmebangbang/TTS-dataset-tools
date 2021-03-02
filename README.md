@@ -1,5 +1,5 @@
 # Automated-TTS-corpus-builder
-Automatically generates TTS dataset using audio and associated text. Make cuts under a custom length. Uses aeneas to force align text to audio. Use the trimmer to remove any cuts under a certain length.
+Automatically generates TTS dataset using audio and associated text. Make cuts under a custom length. Uses aeneas to force align text to audio. Use the shifter to create more source text and audio by splitting entries and combining end and beginning halves. Use the trimmer to remove any cuts under a certain length.
 
 
 # Setup
@@ -24,6 +24,14 @@ pip install pydub
 Place .wav file of source audio and source text file inside repo directory.  
 
 Run python corpus_builder.py -input_text (name of text_file) -audio_name (name of wav file) -output_wav_path (output wavefolder name) -cut_length (max length of cuts in seconds) -index_start (starting index number)
+
+New .wav files will be wrote to output_wav_path.  Csv file of cuts will be wrote to /csv_out
+
+## corpus_shifter.py ##
+
+Place .wav file of source audio and source text file inside repo directory.  
+
+Run python corpus_shifter.py -csv (original csv file) -output_wav_path (output wavefolder name) -input_wav_path (input wavefolder name) -index_start (starting index number)
 
 New .wav files will be wrote to output_wav_path.  Csv file of cuts will be wrote to /csv_out
 
