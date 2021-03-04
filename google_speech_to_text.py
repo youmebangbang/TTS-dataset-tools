@@ -4,8 +4,6 @@ from pydub import AudioSegment
 from google.cloud import storage
 from google.cloud import speech as speech
 
-#client = storage.Client.from_service_account_json(json_credentials_path='C:\TTS-corpus-builder\My First Project-b660c6889e30.json')
-
 def upload_blob(bucket_name, source_file_name, destination_blob_name):
 
     storage_client = storage.Client.from_service_account_json(json_credentials_path='C:\TTS-corpus-builder\My First Project-b660c6889e30.json')
@@ -17,7 +15,7 @@ def upload_blob(bucket_name, source_file_name, destination_blob_name):
 
 def transcribe_file(wavfile):
     print("Uploading {} to google cloud storage bucket".format(wavfile))
-    #upload_blob("youmebangbang_bucket", wavfile, "temp_audio.wav")
+    upload_blob("youmebangbang_bucket", wavfile, "temp_audio.wav")
     gcs_uri = "gs://youmebangbang_bucket/temp_audio.wav"
 
     #break wav file into < 10mb chunks
@@ -70,10 +68,8 @@ def transcribe_file(wavfile):
             #word_info_array.append(result.alternatives[0].words)
             
             print("Transcript: {}".format(result.alternatives[0].transcript))
-            #print("Confidence: {}".format(result.alternatives[0].confidence))
-        newline = ""
-        for x in range(0, len(result_array)-1):             
-            f.write(newline + result_array[x])
-            newline = '\n'
+            #print("Confidence: {}".format(result.alternatives[0].confidence))                    
+        f.write("".join(result_array))
+            
 
-transcribe_file("beastinfection.wav")
+transcribe_file("test.wav")
