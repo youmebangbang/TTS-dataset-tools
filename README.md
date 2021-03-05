@@ -9,12 +9,19 @@ In linux, install aeneas and pydub:
 wget https://raw.githubusercontent.com/readbeyond/aeneas/master/install_dependencies.sh
 
 bash install_dependencies.sh
+
 pip install numpy
+
 pip install aeneas
+
 test installation:  python -m aeneas.diagnostics
+
 pip install pydub
+
 pip install dearpygui
+
 pip install google-cloud-speech
+
 pip install google-cloud-storage
 
 # Usage
