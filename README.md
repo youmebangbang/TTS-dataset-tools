@@ -26,6 +26,7 @@ pip install google-cloud-storage
 
 # Usage
 
+Video tutorial coming soon!
 
 # Recommendations
 
