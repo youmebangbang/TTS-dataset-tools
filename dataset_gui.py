@@ -442,7 +442,8 @@ def open_csv_proofread_call(sender, data):
 
 def add_csv_file_proofread_call(sender, data):
     path = "{}/{}".format(data[0], data[1])    
-
+    #clear table
+    clear_table("table_proofread")
     #populate table with entries
     with open(path, 'r') as csv_file:            
         csv_reader = csv.reader(csv_file, delimiter='|')
