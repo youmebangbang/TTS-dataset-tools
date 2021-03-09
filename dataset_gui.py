@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy
 import simpleaudio as sa
 import io
@@ -20,19 +21,43 @@ from google.cloud import speech as speech
 class Proofreader:
     def __init__(self):
         self.current = None
-        self.current_bak = None
         self.current_point = None
         self.current_plot_point = None
         self.next = None
-        self.next_bak = None
         self.next_point = None
         self.next_plot_point = None
+        self.selected_row = 0
+        self.num_items = 0
+
+    def set_num_items(self, data):
+        self.num_items = data
+
+    def get_num_items(self):
+        return self.num_items
+
+    def play(self, data):
+        wav = data            
+        sa.play_buffer(
+            wav.raw_data,
+            num_channels=wav.channels,
+            bytes_per_sample=wav.sample_width,
+            sample_rate=wav.frame_rate
+        )
+
+    def stop(self):
+        sa.stop_all()
+
+    def set_selected_row(self, row):
+        self.selected_row = row
+
+    def get_selected_row(self):
+        return self.selected_row
 
     def set_rate(self, rate):
-        self.rate = rate
+        self.rate = int(rate)
 
     def get_rate(self):
-        return rate
+        return self.rate
 
     def set_current_point(self, point):
         self.current_point = point
@@ -46,12 +71,7 @@ class Proofreader:
     def get_next_point(self):
         return self.next_point
 
-    def cut_wav(self, mode, wav_name, selection):
-        #do some wav cutting
-        print("cutting")
-
-    def set_current(self, wav):
-        self.current_bak = self.current
+    def set_current(self, wav):  
         self.current = wav         
     
     def set_next(self, wav):
@@ -59,9 +79,6 @@ class Proofreader:
 
     def get_current(self):
         return self.current
-
-    def get_current_bak(self):
-        return current_bak
 
     def get_next(self):
         return self.next
@@ -74,50 +91,37 @@ class Proofreader:
 
     def plot_wavs(self):
         audio1 = self.current.get_array_of_samples()   
-        w1_int16 = numpy.frombuffer(audio1, dtype=numpy.int16)
-        w1_float32 = list(w1_int16.astype(numpy.float32))
+        current_int16 = numpy.frombuffer(audio1, dtype=numpy.int16)
+        current_float32 = list(current_int16.astype(numpy.float32))
 
         audio2 = self.next.get_array_of_samples()   
-        w2_int16 = numpy.frombuffer(audio2, dtype=numpy.int16)
-        w2_float32 = list(w2_int16.astype(numpy.float32))
+        next_int16 = numpy.frombuffer(audio2, dtype=numpy.int16)
+        next_float32 = list(next_int16.astype(numpy.float32))
 
-        w1_x_axis = []
-        w2_x_axis = []
+        current_x_axis = []
+        next_x_axis = []
 
-        for i in range(0, len(w1_float32)):
-            w1_x_axis.append(i)
-        for i in range(0, len(w2_float32)):
-            w2_x_axis.append(i)  
+        for i in range(0, len(current_float32)):
+            current_x_axis.append(i)
+        for i in range(0, len(next_float32)):
+            next_x_axis.append(i)  
 
-        print("current_plot length for sample rate is: {}".format(len(w1_x_axis) / 44100))     
-
-        add_line_series("current_plot", "", w1_x_axis, w1_float32, weight=2)
-        add_line_series("next_plot", "", w2_x_axis, w2_float32, weight=2)
+        #print("current_plot length for sample rate is: {}".format(len(current_x_axis) / 44100))     
+        add_line_series("current_plot", "", current_x_axis, current_float32, weight=2)
+        add_line_series("next_plot", "", next_x_axis, next_float32, weight=2)
 
     def current_plot_drawing_set_point(self, point):
         self.current_point = point
-        draw_line("current_plot_drawing", [0,5], [1200, 5], [255, 255, 0, 255], 10)
+        draw_line("current_plot_drawing", [0,5], [1200, 5], [0,19,94, 255], 10)
         if point:
-            draw_line("current_plot_drawing", [point-2,5], [point+2, 5], [255, 0, 0, 255], 10)
+            draw_line("current_plot_drawing", [point-3,5], [point+3, 5], [255, 0, 0, 255], 10)
     
-    def next_plot_drawing_set_point(self, point): 
+    def next_plot_drawing_set_point(self, point):
         self.next_point = point
-        draw_line("next_plot_drawing", [0,5], [1200, 5], [255, 255, 0, 255], 10)
+        draw_line("next_plot_drawing", [0,5], [1200, 5], [0,19,94, 255], 10)
         if point:
-            draw_line("next_plot_drawing", [point-2,5], [point+2, 5], [255, 0, 0, 255], 10)
+            draw_line("next_plot_drawing", [point-3,5], [point+3, 5], [255, 0, 0, 255], 10)
     
-    def set_next_plot_point(self, point):
-        self.next_plot_point = point
-
-    def get_next_plot_point(self):
-        return self.next_plot_point
-
-    def set_current_plot_point(self, point):
-        self.current_plot_point = point
-
-    def get_current_plot_point(self):
-        return self.current_plot_point
-
 class Dataset_builder:
     def __init__(self, project_name, speaker_text_path, wav_file_path, index_start, cut_length, contains_punc):    
         self.project_name = project_name
@@ -224,7 +228,7 @@ class Dataset_builder:
                                         
                         more_cuts = open("aeneas_prepped/temp.csv", 'w')
 
-                        #export the current cut wav file to run on aeneas again
+                        #save the current cut wav file to run on aeneas again
                         w = AudioSegment.from_wav(audio_name)
                         wav_cut = w[(beginning_cut*1000):(end_cut*1000)]
                         wav_cut.export("aeneas_prepped/tempcut.wav", format="wav")
@@ -374,6 +378,7 @@ def transcribe_file(wavfile, bucket_name, project_name):
             
     set_value("label_wav_file_transcribe", "Done!")    
 
+
 #Functions / callbacks for Google Speech
 def open_wav_file_transcribe_call(sender, data):
     open_file_dialog(add_wav_file_transcribe) 
@@ -384,10 +389,15 @@ def add_wav_file_transcribe(sender, data):
 
 def run_google_speech_call(sender, data):
     #run transcription
+    if get_value("label_wav_file_transcribe") == "":
+        return
     transcribe_file(get_value("label_wav_file_transcribe"), get_value("input_storage_bucket"), get_value("input_project_name_transcribe"))     
+
 
 #Functions / callbacks for Dataset Builder
 def run_dataset_builder_call(sender, data):
+    if get_value("label_wav_file_path") == "" or get_value("label_speaker_text_path") == "":
+        return
     #check to see if txt and wav file was selected
     set_value("label_build_status", "Running builder...")
     if get_value("input_project_name") and get_value("label_speaker_text_path") and get_value("label_wav_file_path"):
@@ -412,7 +422,21 @@ def open_speaker_txt_file_call(sender, data):
 def open_wav_file_call(sender, data):
     open_file_dialog(add_speaker_wav_file)  
 
+
 #Functions / callbacks for Proofreader
+def save_csv_proofread_call(sender, data):
+    if proofreader.get_current() == None:
+        return 
+    name = get_value("proofread_project_name")
+    if name:
+        newline = ""
+        with open(name, 'w') as csv_file:
+            table = get_table_data("table_proofread")
+            for row in table:
+                csv_file.write("{}{}|{}".format(newline, row[0], row[1]))
+                newline = "\n"
+        set_value("proofread_status", "{} saved".format(name))
+
 def open_csv_proofread_call(sender, data):
     open_file_dialog(add_csv_file_proofread_call)
 
@@ -422,121 +446,277 @@ def add_csv_file_proofread_call(sender, data):
     #populate table with entries
     with open(path, 'r') as csv_file:            
         csv_reader = csv.reader(csv_file, delimiter='|')
-        for row in csv_reader: 
+        num_items = 0
+        for row in csv_reader:             
             #wav_filename should include path to wav file
             wav_filename_with_path = row[0] 
             text = row[1]
             add_row("table_proofread", [wav_filename_with_path, text])
+            num_items += 1
+        proofreader.set_num_items(num_items)
 
-    w1_wav = AudioSegment.from_wav("{}/wavs/1.wav".format(data[0]))
-    w2_wav = AudioSegment.from_wav("{}/wavs/2.wav".format(data[0]))
+    #get values from first 2 rows
+    current_path = get_table_item("table_proofread", 0, 0)
+    next_path = get_table_item("table_proofread", 1, 0)
 
-
+    current_wav = AudioSegment.from_wav("{}/{}".format(data[0], current_path))
+    next_wav = AudioSegment.from_wav("{}/{}".format(data[0], next_path))
 
     #set project sample rate    
-    wav_info = mediainfo("{}/wavs/1.wav".format(data[0]))
+    wav_info = mediainfo("{}/{}".format(data[0], current_path))
     sample_rate = wav_info['sample_rate']
     proofreader.set_rate(sample_rate)
     print("project rate is: {}".format(sample_rate))
 
+    set_value("current_input_text", get_table_item("table_proofread", 0, 1))
+    set_value("next_input_text", get_table_item("table_proofread", 1, 1))
+    set_value("wav_current_label", current_path)
+    set_value("wav_next_label", next_path)
     proofreader.set_project_path(data[0])
-    proofreader.set_current(w1_wav)
-    proofreader.set_next(w2_wav)
+    proofreader.set_current(current_wav)
+    proofreader.set_next(next_wav)
     proofreader.plot_wavs()
 
-    # audio1 = w1_wav.get_array_of_samples()   
-    # w1_int16 = numpy.frombuffer(audio1, dtype=numpy.int16)
-    # w1_float32 = list(w1_int16.astype(numpy.float32))
+def save_current_text_call(sender, data):
+    if proofreader.get_current() == None:
+        return 
+    row = proofreader.get_selected_row()
+    text = get_value("current_input_text")
+    set_table_item("table_proofread", row, 1, text)
 
-    # audio2 = w2_wav.get_array_of_samples()   
-    # w2_int16 = numpy.frombuffer(audio2, dtype=numpy.int16)
-    # w2_float32 = list(w2_int16.astype(numpy.float32))
+def save_next_text_call(sender, data):
+    if proofreader.get_next() == None:
+        return 
+    row = proofreader.get_selected_row()
+    text = get_value("next_input_text")
+    set_table_item("table_proofread", row+1, 1, text)    
+    
+def current_save_call(sender, data):
+    w = proofreader.get_current()
+    if w == None:
+        return
+    row = proofreader.get_selected_row() 
+    path = Path(get_table_item("table_proofread", row, 0))
+    print(path.name)
+    w.export("wavs/{}".format(path.name), format="wav")
+    set_value("proofread_status", "{} saved".format(path.name))
 
-    # w1_x_axis = []
-    # w2_x_axis = []
-
-    # for i in range(0, len(w1_float32)):
-    #     w1_x_axis.append(i)
-    # for i in range(0, len(w2_float32)):
-    #     w2_x_axis.append(i)        
-
-    # add_line_series("current_plot", "", w1_x_axis, w1_float32, weight=2)
-    # add_line_series("next_plot", "", w2_x_axis, w2_float32, weight=2)
-
-def current_restore_call(sender, data):
-    pass
-def current_export_call(sender, data):
-    pass
-def current_delete_call(sender, data):
-    w_current = proofreader.get_current()
-    w_next = proofreader.get_next()
-    point = proofreader.get_current_point()
-
-    #scale point
-    point = point
-    w_out = w_current[:point]
-    w_cut = w_current[point+1:]
-    w_next = w_cut + w_next
-
-    proofreader.set_current(w_out)
-    proofreader.set_next(w_next)
 
 def current_play_from_selection_call(sender, data):
     w_current = proofreader.get_current()
+    if w_current == None:
+        return
+    num_samples = len(w_current.get_array_of_samples())
     point = proofreader.get_current_point()
-    w_cut = w_current[point+1:]
-    play(w_cut)
+
+    if point:
+        point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000
+        print("current point is: {}".format(point))
+        wav = w_current[point:]
+        proofreader.play(wav)        
+        # #play(w_cut)
+        # sa.play_buffer(
+        #     wav.raw_data,
+        #     num_channels=wav.channels,
+        #     bytes_per_sample=wav.sample_width,
+        #     sample_rate=wav.frame_rate
+        # )
+
+def next_play_to_selection_call(sender, data):
+    w_next = proofreader.get_next()
+    if w_next == None:
+        return
+    num_samples = len(w_next.get_array_of_samples())
+    point = proofreader.get_next_point()
+
+    if point:
+        point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000
+        print("next point is: {}".format(point))
+        wav = w_next[:point]
+        proofreader.play(wav)
+        # #play(w_cut)
+        # sa.play_buffer(
+        #     wav.raw_data,
+        #     num_channels=wav.channels,
+        #     bytes_per_sample=wav.sample_width,
+        #     sample_rate=wav.frame_rate
+        # )
 
 def current_send_call(sender, data):
-    pass
-def next_restore_call(sender, data):
-    pass
-def next_export_call(sender, data):
-    pass
-def next_delete_call(sender, data):
-    pass
+    w_current = proofreader.get_current()
+    w_next = proofreader.get_next()
+    if proofreader.get_current() == None:
+        return 
+
+    num_samples = len(w_current.get_array_of_samples())
+    point = proofreader.get_current_point()
+    if point:
+        point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000        
+        w_cut = w_current[point:]
+        w_current = w_current[:point]
+        w_next = w_cut + w_next
+        proofreader.set_current(w_current)
+        proofreader.set_next(w_next)
+        proofreader.plot_wavs()
+
 def next_send_call(sender, data):
-    pass
-def next_play_to_selection_call(sender, data):
-    pass
+    w_current = proofreader.get_current()
+    w_next = proofreader.get_next()
+    if proofreader.get_next() == None:
+        return 
+
+    num_samples = len(w_next.get_array_of_samples())
+    point = proofreader.get_next_point()
+    if point:
+        point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000        
+        w_cut = w_next[:point]
+        w_next = w_next[point:]
+        w_current = w_current + w_cut
+        proofreader.set_current(w_current)
+        proofreader.set_next(w_next)
+        proofreader.plot_wavs()        
+
+def next_save_call(sender, data):
+    w = proofreader.get_next()
+    if w == None:
+        return
+    row = proofreader.get_selected_row() 
+    path = Path(get_table_item("table_proofread", row + 1, 0))
+    print(path.name)
+    w.export("wavs/{}".format(path.name), format="wav") 
+    set_value("proofread_status", "{} saved".format(path.name))
+   
 
 def current_play_call(sender, data):
-    play(proofreader.get_current())
+    wav = proofreader.get_current()
+    if wav == None:
+        return
+    proofreader.play(wav)
+    # sa.play_buffer(
+    #     wav.raw_data,
+    #     num_channels=wav.channels,
+    #     bytes_per_sample=wav.sample_width,
+    #     sample_rate=wav.frame_rate
+    # )
 
 def next_play_call(sender, data):
-    play(proofreader.get_next())    
+    wav = proofreader.get_next()
+    if wav == None:
+        return
+    proofreader.play(wav)
+    # sa.play_buffer(
+    #     wav.raw_data,
+    #     num_channels=wav.channels,
+    #     bytes_per_sample=wav.sample_width,
+    #     sample_rate=wav.frame_rate
+    # )
 
-def table_row_selected_call(sender, data):
+def stop_playing_call(sender, data):
+    proofreader.stop()
+
+def table_row_selected_call(sender, data):    
     index = get_table_selections("table_proofread")
-    set_table_selection("table_proofread", index[0][0], index[0][1], False)
+    row = index[0][0]
+    col = index[0][1]        
+    set_table_selection("table_proofread", row, col, False) 
+
+    if proofreader.get_num_items() == (row + 1):
+        return
+
+    #set the last row clicked information
+    proofreader.set_selected_row(row)
     
-    w1_wav = AudioSegment.from_wav("{}/wavs/{}.wav".format(proofreader.get_project_path(), index[0][0] + 1))
-    w2_wav = AudioSegment.from_wav("{}/wavs/{}.wav".format(proofreader.get_project_path(), index[0][0] + 2))
+    #CHANGE HERE
+    current_path = get_table_item("table_proofread", row, 0)
+    next_path = get_table_item("table_proofread", row+1, 0)
 
-    proofreader.set_current(w1_wav)
-    proofreader.set_next(w2_wav)
+    current_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), current_path))
+    next_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), next_path))
 
+    set_value("current_input_text", get_table_item("table_proofread", row, 1))
+    set_value("next_input_text", get_table_item("table_proofread", row+1, 1))
+    set_value("wav_current_label", current_path)
+    set_value("wav_next_label", next_path)
+    proofreader.set_current(current_wav)
+    proofreader.set_next(next_wav)
     #set_item_style_var("current_plot", mvGuiStyleVar_Name, "")
-
     proofreader.plot_wavs()
 
-
 def mouse_clicked_proofread_call(sender, data):
-    mouse_plot_pos = get_plot_mouse_pos()
+    #mouse_plot_pos = get_plot_mouse_pos()
     mouse_pos = get_mouse_pos(local=False)
-    print(mouse_pos)
     point = mouse_pos[0]
     #offset
     point += -7
     if is_item_clicked("current_plot"):        
         proofreader.current_plot_drawing_set_point(point)
-        proofreader.set_current_plot_point(mouse_plot_pos[0])         
-    else:
+    if is_item_clicked("next_plot"):
         proofreader.next_plot_drawing_set_point(point)
-        proofreader.set_next_plot_point(mouse_plot_pos[0])         
 
 
-    
+def render_call(sender, data):
+    if is_key_pressed(mvKey_Up):
+        #move to previous entries
+        row = proofreader.get_selected_row()
+        if row == 0:
+            return
+        if proofreader.get_current() == None:
+            return            
+        row = row - 1
+        proofreader.set_selected_row(row)
+        current_path = get_table_item("table_proofread", row, 0)
+        next_path = get_table_item("table_proofread", row+1, 0)
+
+        current_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), current_path))
+        next_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), next_path))
+
+        set_value("current_input_text", get_table_item("table_proofread", row, 1))
+        set_value("next_input_text", get_table_item("table_proofread", row+1, 1))
+        set_value("wav_current_label", current_path)
+        set_value("wav_next_label", next_path)
+        proofreader.set_current(current_wav)
+        proofreader.set_next(next_wav)
+        proofreader.plot_wavs()
+
+    if is_key_pressed(mvKey_Down):
+        #move to next entries
+        row = proofreader.get_selected_row()
+        if proofreader.get_num_items() == (row + 1):
+            return
+        if proofreader.get_current() == None:
+            return
+            
+        row = row + 1    
+        proofreader.set_selected_row(row)
+        current_path = get_table_item("table_proofread", row, 0)
+        next_path = get_table_item("table_proofread", row+1, 0)
+
+        current_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), current_path))
+        next_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), next_path))
+
+        set_value("current_input_text", get_table_item("table_proofread", row, 1))
+        set_value("next_input_text", get_table_item("table_proofread", row+1, 1))
+        set_value("wav_current_label", current_path)
+        set_value("wav_next_label", next_path)
+        proofreader.set_current(current_wav)
+        proofreader.set_next(next_wav)
+        proofreader.plot_wavs()
+
+    if is_key_pressed(mvKey_Open_Brace):
+        current_send_call("","") 
+
+    if is_key_pressed(mvKey_Close_Brace):
+        next_send_call("","") 
+
+    if is_key_pressed(mvKey_Insert):
+        if proofreader.get_current() == None:
+            return
+        save_current_text_call("","")  
+        save_next_text_call("","")  
+        current_save_call("","")   
+        next_save_call("","") 
+        set_value("proofread_status", "All saved")
+       
 
 set_main_window_size(1600, 1000)
 set_main_window_title("DeepVoice Dataset Creator / Editor 1.0 by YouMeBangBang")
@@ -548,14 +728,16 @@ set_theme("Dark")
 
 #initialize proofreader 
 proofreader = Proofreader()
+set_mouse_click_callback(mouse_clicked_proofread_call)
+
+set_render_callback(render_call)
 
 with window("mainWin"):
-    set_mouse_click_callback(mouse_clicked_proofread_call)
 
     with tab_bar("tb1"):
         with tab("tab0", label="Transcribe Audio"):
             add_spacing(count=5)
-            add_text("For Google Speech to Text API you will need a Google Cloud Platform account.\n Your $GOOGLE_APPLICATION_CREDENTIALS must point to your credentials JSON file.")
+            add_text("For Google Speech to Text API you will need a Google Cloud Platform account.\n\nYour $GOOGLE_APPLICATION_CREDENTIALS must point to your credentials JSON file. \n\nText will be saved to [project name]/transcribed.txt")
             add_spacing(count=5)
             add_text("Enter name of project: ")
             add_same_line(spacing=10)
@@ -612,39 +794,58 @@ with window("mainWin"):
         with tab("tab2", label="Proofread Dataset"):
             tabledata = []
             add_spacing(count=5)
-            add_text("Choose a csv file to proofread and edit wavs")
+            add_text("ALWAYS BACKUP PROJECT FOLDER BEFORE EDITING! \nChoose a csv file to proofread and edit wavs")
+            add_same_line(spacing=100) 
+            add_text("Keyboard shortcuts-")
+            add_same_line(spacing=10) 
+            add_text("Up arrow: load previous entries \nDown arrow: load next entries  \n'Insert': save all wavs and text \n'[': Send current cut to beginning of next \n']': Send next cut to end of current")
             add_spacing(count=5)
-            add_button("open_csv_proofread", callback=open_csv_proofread_call, label="Open csv file")             
+            add_button("open_csv_proofread", callback=open_csv_proofread_call, label="Open csv file")   
+            add_same_line(spacing=50)     
+            add_button("save_csv_proofread", callback=save_csv_proofread_call, label="Save csv file:")                    
+            add_same_line(spacing=10)     
+            add_input_text("proofread_project_name", width=200, default_value="enter save name", label="" ) 
+            add_same_line(spacing=10)
+            add_label_text("proofread_status", label="")
+            add_spacing(count=3)
             add_table("table_proofread", ["Wav path", "Text"], callback=table_row_selected_call)
             add_spacing(count=5)
+            add_input_text("current_input_text", width=1200, default_value="", label="" )
+            add_same_line(spacing=10)
+            add_button("save_current_input_text", callback=save_current_text_call, label="Save text")             
             add_plot("current_plot", label="Current Wav", width=1200, height=200, xaxis_no_tick_labels=True,  
                 yaxis_no_tick_labels=True, no_mouse_pos=True, crosshairs=True, xaxis_lock_min=True, xaxis_lock_max=True, yaxis_lock_min=True, yaxis_lock_max=True)
             add_same_line(spacing=10)
             with group("group1"):
-                add_button("current_play", callback=current_play_call, label="Play")  
+                add_button("current_play", callback=current_play_call, label="Play")
+                add_same_line(spacing=10)
+                add_image_button("stop_playing", "stop.png", callback=stop_playing_call, height=20, width=20, background_color=[0,0,0,255])  
+                add_same_line(spacing=10)
+                add_label_text("wav_current_label", label="")      
                 add_button("current_play_from_selection", callback=current_play_from_selection_call, label="Play from selection")  
                 add_button("current_send", callback=current_send_call, label="Send end cut to Next")  
-                add_button("current_delete", callback=current_delete_call, label="Delete end cut")  
-                add_button("current_export", callback=current_export_call, label="Export wav")  
-                add_button("current_restore", callback=current_restore_call, label="Restore wav")  
-
+                add_button("current_save", callback=current_save_call, label="Save wav")  
             add_drawing("current_plot_drawing", width=1200, height=16)
             proofreader.current_plot_drawing_set_point(0)
 
             add_spacing(count=5)
+            add_input_text("next_input_text", width=1200, default_value="", label="" )
+            add_same_line(spacing=10)
+            add_button("save_next_input_text", callback=save_next_text_call, label="Save text")             
             add_plot("next_plot", label="Next Wav", width=1200, height=200, xaxis_no_tick_labels=True, 
                 yaxis_no_tick_labels=True, no_mouse_pos=True, crosshairs=True, xaxis_lock_min=True, xaxis_lock_max=True, yaxis_lock_min=True, yaxis_lock_max=True)
             add_same_line(spacing=10)
             with group("group2"):
-                add_button("next_play", callback=next_play_call, label="Play")  
+                add_button("next_play", callback=next_play_call, label="Play")
+                add_same_line(spacing=10)
+                add_image_button("stop_playing2", "stop.png", callback=stop_playing_call, height=20, width=20, background_color=[0,0,0,255])  
+                add_same_line(spacing=10)                  
+                add_label_text("wav_next_label", label="")        
                 add_button("next_play_to_selection", callback=next_play_to_selection_call, label="Play to selection")  
                 add_button("next_send", callback=next_send_call, label="Send beginning cut to Current")  
-                add_button("next_delete", callback=next_delete_call, label="Delete end cut")  
-                add_button("next_export", callback=next_export_call, label="Export wav")  
-                add_button("next_restore", callback=next_restore_call, label="Restore wav")                 
+                add_button("next_save", callback=next_save_call, label="Save wav")                
             add_drawing("next_plot_drawing", width=1200, height=10)  
             proofreader.next_plot_drawing_set_point(0)
-
 
         with tab("tab3", label="Increase Dataset"):
             add_spacing(count=5)
