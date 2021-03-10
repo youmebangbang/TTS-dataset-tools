@@ -339,8 +339,7 @@ def transcribe_file(wavfile, bucket_name, project_name):
 
     info = mediainfo(wavfile)
     sample_rate = info['sample_rate']
-    print("Transcribing {} with audio rate {}".format(wavfile, sample_rate))
-  
+    print("Transcribing {} with audio rate {}".format(wavfile, sample_rate))  
   
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
@@ -350,10 +349,8 @@ def transcribe_file(wavfile, bucket_name, project_name):
     )
 
     operation = client.long_running_recognize(config=config, audio=audio)
-
     print("Waiting for operation to complete, this may take several minutes...")
     set_value("label_wav_file_transcribe", "Waiting for operation to complete, this may take several minutes...")    
-
     response = operation.result(timeout=28800)    
 
         # for word_info in words_info:
@@ -442,6 +439,7 @@ def open_csv_proofread_call(sender, data):
 
 def add_csv_file_proofread_call(sender, data):
     path = "{}/{}".format(data[0], data[1])    
+    set_value("proofread_project_name", data[1])
     #clear table
     clear_table("table_proofread")
     #populate table with entries
@@ -467,8 +465,6 @@ def add_csv_file_proofread_call(sender, data):
     wav_info = mediainfo("{}/{}".format(data[0], current_path))
     sample_rate = wav_info['sample_rate']
     proofreader.set_rate(sample_rate)
-    print("project rate is: {}".format(sample_rate))
-
     set_value("current_input_text", get_table_item("table_proofread", 0, 1))
     set_value("next_input_text", get_table_item("table_proofread", 1, 1))
     set_value("wav_current_label", current_path)
@@ -842,7 +838,7 @@ with window("mainWin"):
             add_same_line(spacing=50)     
             add_button("save_csv_proofread", callback=save_csv_proofread_call, label="Save csv file:")                    
             add_same_line(spacing=10)     
-            add_input_text("proofread_project_name", width=200, default_value="enter save name", label="" ) 
+            add_input_text("proofread_project_name", width=200, default_value="", label="" ) 
             add_same_line(spacing=10)
             add_label_text("proofread_status", label="")
             add_spacing(count=3)
