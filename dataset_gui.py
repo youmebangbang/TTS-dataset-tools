@@ -1,3 +1,4 @@
+import datetime
 from pathlib import Path
 import numpy
 import simpleaudio as sa
@@ -478,6 +479,14 @@ def save_csv_proofread_call(sender, data):
                 csv_file.write("{}{}|{}".format(newline, row[0], row[1]))
                 newline = "\n"
         set_value("proofread_status", "{}/{} saved".format(proofreader.get_project_path(), name))
+    #logging
+    with open("{}/logfile.txt".format(proofreader.get_project_path()), 'a') as log_file:
+        t = datetime.datetime.now()
+        tt = t.strftime("%c")
+        row = proofreader.get_selected_row()
+        last_wav = get_table_item("table_proofread", row, 0)
+        log_file.write("\n{}: Saved {} Last item selected: {}".format(tt, name, last_wav))
+        
 
 def open_csv_proofread_call(sender, data):
     open_file_dialog(add_csv_file_proofread_call)
