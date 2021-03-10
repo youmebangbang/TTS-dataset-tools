@@ -682,7 +682,7 @@ def render_call(sender, data):
     if is_key_pressed(mvKey_Down):
         #move to next entries
         row = proofreader.get_selected_row()
-        if proofreader.get_num_items() == (row + 1):
+        if proofreader.get_num_items() == (row + 2):
             return
         if proofreader.get_current() == None:
             return
@@ -743,12 +743,10 @@ with window("mainWin"):
             add_text("Enter name of project: ")
             add_same_line(spacing=10)
             add_input_text("input_project_name_transcribe", width=200, default_value="MyProject", label="") 
-
             add_spacing(count=5)
             add_text("Enter name of your clould storage bucket: ")
             add_same_line(spacing=10)
             add_input_text("input_storage_bucket", width=200, default_value="my_bucket", label="") 
-
             add_spacing(count=5)
             add_text("Select the wav file to transcribe (must be mono)")
             add_button("open_wav_file_transcribe", callback=open_wav_file_transcribe_call, label="Open wav file") 
@@ -849,8 +847,7 @@ with window("mainWin"):
             proofreader.next_plot_drawing_set_point(0)
 
         with tab("tab3", label="Increase Dataset"):
-            add_spacing(count=5)
-            
+            add_spacing(count=5)           
 
 
 start_dearpygui(primary_window="mainWin")
