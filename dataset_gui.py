@@ -430,12 +430,12 @@ def save_csv_proofread_call(sender, data):
     name = get_value("proofread_project_name")
     if name:
         newline = ""
-        with open(name, 'w') as csv_file:
+        with open("{}/{}".format(proofreader.get_project_path(), name), 'w') as csv_file:
             table = get_table_data("table_proofread")
             for row in table:
                 csv_file.write("{}{}|{}".format(newline, row[0], row[1]))
                 newline = "\n"
-        set_value("proofread_status", "{} saved".format(name))
+        set_value("proofread_status", "{}/{} saved".format(proofreader.get_project_path(), name))
 
 def open_csv_proofread_call(sender, data):
     open_file_dialog(add_csv_file_proofread_call)
@@ -499,9 +499,8 @@ def current_save_call(sender, data):
     row = proofreader.get_selected_row() 
     path = Path(get_table_item("table_proofread", row, 0))
     print(path.name)
-    w.export("wavs/{}".format(path.name), format="wav")
+    w.export("{}/wavs/{}".format(proofreader.get_project_path(), path.name), format="wav")
     set_value("proofread_status", "{} saved".format(path.name))
-
 
 def current_play_from_selection_call(sender, data):
     w_current = proofreader.get_current()
@@ -523,6 +522,26 @@ def current_play_from_selection_call(sender, data):
         #     sample_rate=wav.frame_rate
         # )
 
+def current_play_to_selection_call(sender, data):
+    w_current = proofreader.get_current()
+    if w_current == None:
+        return
+    num_samples = len(w_current.get_array_of_samples())
+    point = proofreader.get_current_point()
+
+    if point:
+        point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000
+        print("current point is: {}".format(point))
+        wav = w_current[:point]
+        proofreader.play(wav)        
+        # #play(w_cut)
+        # sa.play_buffer(
+        #     wav.raw_data,
+        #     num_channels=wav.channels,
+        #     bytes_per_sample=wav.sample_width,
+        #     sample_rate=wav.frame_rate
+        # )
+
 def next_play_to_selection_call(sender, data):
     w_next = proofreader.get_next()
     if w_next == None:
@@ -535,6 +554,26 @@ def next_play_to_selection_call(sender, data):
         print("next point is: {}".format(point))
         wav = w_next[:point]
         proofreader.play(wav)
+        # #play(w_cut)
+        # sa.play_buffer(
+        #     wav.raw_data,
+        #     num_channels=wav.channels,
+        #     bytes_per_sample=wav.sample_width,
+        #     sample_rate=wav.frame_rate
+        # )
+
+def next_play_from_selection_call(sender, data):
+    w_next = proofreader.get_next()
+    if w_next == None:
+        return
+    num_samples = len(w_next.get_array_of_samples())
+    point = proofreader.get_next_point()
+
+    if point:
+        point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000
+        print("next point is: {}".format(point))
+        wav = w_next[point:]
+        proofreader.play(wav)        
         # #play(w_cut)
         # sa.play_buffer(
         #     wav.raw_data,
@@ -584,7 +623,7 @@ def next_save_call(sender, data):
     row = proofreader.get_selected_row() 
     path = Path(get_table_item("table_proofread", row + 1, 0))
     print(path.name)
-    w.export("wavs/{}".format(path.name), format="wav") 
+    w.export("{}/wavs/{}".format(proofreader.get_project_path(), path.name), format="wav") 
     set_value("proofread_status", "{} saved".format(path.name))
    
 
@@ -820,7 +859,8 @@ with window("mainWin"):
                 add_same_line(spacing=10)
                 add_image_button("stop_playing", "stop.png", callback=stop_playing_call, height=20, width=20, background_color=[0,0,0,255])  
                 add_same_line(spacing=10)
-                add_label_text("wav_current_label", label="")      
+                add_label_text("wav_current_label", label="") 
+                add_button("current_play_to_selection", callback=current_play_to_selection_call, label="Play to selection")       
                 add_button("current_play_from_selection", callback=current_play_from_selection_call, label="Play from selection")  
                 add_button("current_send", callback=current_send_call, label="Send end cut to Next")  
                 add_button("current_save", callback=current_save_call, label="Save wav")  
@@ -841,6 +881,7 @@ with window("mainWin"):
                 add_same_line(spacing=10)                  
                 add_label_text("wav_next_label", label="")        
                 add_button("next_play_to_selection", callback=next_play_to_selection_call, label="Play to selection")  
+                add_button("next_play_from_selection", callback=next_play_from_selection_call, label="Play from selection")  
                 add_button("next_send", callback=next_send_call, label="Send beginning cut to Current")  
                 add_button("next_save", callback=next_save_call, label="Save wav")                
             add_drawing("next_plot_drawing", width=1200, height=10)  
