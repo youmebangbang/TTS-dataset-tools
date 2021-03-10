@@ -551,6 +551,21 @@ def current_save_call(sender, data):
     w.export("{}/wavs/{}".format(proofreader.get_project_path(), path.name), format="wav")
     set_value("proofread_status", "{} saved".format(path.name))
 
+def next_save_call(sender, data):
+    w = proofreader.get_next()
+    if w == None:
+        return
+    row = proofreader.get_selected_row() 
+    path = Path(get_table_item("table_proofread", row + 1, 0))
+    w.export("{}/wavs/{}".format(proofreader.get_project_path(), path.name), format="wav") 
+    set_value("proofread_status", "{} saved".format(path.name))    
+
+def save_all_call(sender, data):
+    save_current_text_call("","")
+    save_next_text_call("","")
+    current_save_call("","")
+    next_save_call("","")
+
 def current_play_from_selection_call(sender, data):
     w_current = proofreader.get_current()
     if w_current == None:
@@ -659,17 +674,7 @@ def next_send_call(sender, data):
         w_current = w_current + w_cut
         proofreader.set_current(w_current)
         proofreader.set_next(w_next)
-        proofreader.plot_wavs()        
-
-def next_save_call(sender, data):
-    w = proofreader.get_next()
-    if w == None:
-        return
-    row = proofreader.get_selected_row() 
-    path = Path(get_table_item("table_proofread", row + 1, 0))
-    w.export("{}/wavs/{}".format(proofreader.get_project_path(), path.name), format="wav") 
-    set_value("proofread_status", "{} saved".format(path.name))
-   
+        proofreader.plot_wavs()         
 
 def current_play_call(sender, data):
     wav = proofreader.get_current()
@@ -756,10 +761,11 @@ def mouse_clicked_proofread_call(sender, data):
         proofreader.next_plot_drawing_set_point(point)
 
 def mouse_wheel_proofread_call(sender, data):
-    if data > 0:
-        proofreader.scroll_up()
-    if data < 0:
-        proofreader.scroll_down()
+    if not is_item_hovered("table_proofread"):
+        if data > 0:
+            proofreader.scroll_up()
+        if data < 0:
+            proofreader.scroll_down()
 
 
 def render_call(sender, data):
@@ -879,8 +885,8 @@ with window("mainWin"):
             add_table("table_proofread", ["Wav path", "Text"], callback=table_row_selected_call)
             add_spacing(count=5)
             add_input_text("current_input_text", width=1200, default_value="", label="" )
-            #add_same_line(spacing=10)
-            #add_button("save_current_input_text", callback=save_current_text_call, label="Save text")             
+            add_same_line(spacing=10)
+            add_button("save_all", callback=save_all_call, label="Save all")             
             add_plot("current_plot", label="Current Wav", width=1200, height=200, xaxis_no_tick_labels=True,  
                 yaxis_no_tick_labels=True, no_mouse_pos=True, crosshairs=True, xaxis_lock_min=True, xaxis_lock_max=True, yaxis_lock_min=True, yaxis_lock_max=True)
             add_same_line(spacing=10)
@@ -901,8 +907,8 @@ with window("mainWin"):
 
             add_spacing(count=5)
             add_input_text("next_input_text", width=1200, default_value="", label="" )
-            #add_same_line(spacing=10)
-            #add_button("save_next_input_text", callback=save_next_text_call, label="Save text")             
+            add_same_line(spacing=10)
+            add_button("save_all2", callback=save_all_call, label="Save all")             
             add_plot("next_plot", label="Next Wav", width=1200, height=200, xaxis_no_tick_labels=True, 
                 yaxis_no_tick_labels=True, no_mouse_pos=True, crosshairs=True, xaxis_lock_min=True, xaxis_lock_max=True, yaxis_lock_min=True, yaxis_lock_max=True)
             add_same_line(spacing=10)
