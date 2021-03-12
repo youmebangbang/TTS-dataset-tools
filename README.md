@@ -1,7 +1,7 @@
 # Automated-TTS-dataset-builder
 Automatically generates TTS dataset using audio and associated text. Make cuts under a custom length. Uses aeneas to force align text to audio. Create more source text and audio by splitting entries and combining end and beginning halves. Run dataset_gui.py for GUI tools. 
 
-Current limitations are that you will need to adjust column width of the proofreading section and when navigating entries you must take the focus off the current and next input text boxes or the text box will not update with the next entry. Next version of dearpy gui will solve these issues.
+Current limitations are that you will need to adjust column width of the proofreading section and when navigating entries you must take the focus off the current and next input text boxes or the text box will not update. Next version of dearpy gui will solve these issues.
 
 ![Dataset GUI](https://github.com/youmebangbang/Automated-TTS-dataset-builder/blob/master/dataset_gui.png)
 
