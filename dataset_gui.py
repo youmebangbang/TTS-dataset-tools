@@ -706,7 +706,7 @@ def current_remove_call(sender, data):
     row = proofreader.get_selected_row()
     current_path = get_table_item("table_proofread", row, 0)
     path = Path(current_path)
-    shutil.copy("{}/{}".format(proofreader.get_project_path(), current_path), "{}/wavs/removed_{}".format(proofreader.get_project_path(), path.name))
+    #shutil.copy("{}/{}".format(proofreader.get_project_path(), current_path), "{}/wavs/removed_{}".format(proofreader.get_project_path(), path.name))
     delete_row("table_proofread", row)  
 
 def next_remove_call(sender, data): 
@@ -715,7 +715,7 @@ def next_remove_call(sender, data):
     row = proofreader.get_selected_row()
     next_path = get_table_item("table_proofread", row+1, 0)
     path = Path(next_path)
-    shutil.copy("{}/{}".format(proofreader.get_project_path(), next_path), "{}/wavs/removed_{}".format(proofreader.get_project_path(), path.name))
+    #shutil.copy("{}/{}".format(proofreader.get_project_path(), next_path), "{}/wavs/removed_{}".format(proofreader.get_project_path(), path.name))
     delete_row("table_proofread", row + 1)
     
 
@@ -795,7 +795,7 @@ def render_call(sender, data):
 
 set_main_window_size(1600, 1040)
 set_main_window_title("DeepVoice Dataset Creator / Editor 1.0 by YouMeBangBang")
-set_global_font_scale(1.5)
+#set_global_font_scale(1.5)
 
 
 set_theme("Dark")
@@ -805,6 +805,7 @@ set_theme("Dark")
 proofreader = Proofreader()
 set_mouse_click_callback(mouse_clicked_proofread_call)
 set_mouse_wheel_callback(mouse_wheel_proofread_call)
+add_additional_font("CheyenneSans-Light.otf", 20)
 
 set_render_callback(render_call)
 
