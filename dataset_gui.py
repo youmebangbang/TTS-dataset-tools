@@ -792,6 +792,26 @@ def render_call(sender, data):
         next_save_call("","") 
         set_value("proofread_status", "All saved")
        
+    if is_key_pressed(mvKey_NumPad7):
+        current_play_call("","") 
+
+    if is_key_pressed(mvKey_NumPad8):
+        current_play_to_selection_call("","") 
+
+    if is_key_pressed(mvKey_NumPad9):
+        current_play_from_selection_call("","") 
+
+    if is_key_pressed(mvKey_NumPad4):
+        next_play_call("","") 
+
+    if is_key_pressed(mvKey_NumPad5):
+        next_play_to_selection_call("","") 
+
+    if is_key_pressed(mvKey_NumPad6):
+        next_play_from_selection_call("","") 
+    
+    if is_key_pressed(mvKey_NumPad0):
+        proofreader.stop()
 
 set_main_window_size(1600, 1040)
 set_main_window_title("DeepVoice Dataset Creator / Editor 1.0 by YouMeBangBang")
@@ -874,6 +894,8 @@ with window("mainWin"):
             add_text("Keyboard shortcuts-")
             add_same_line(spacing=10) 
             add_text("Up arrow: load previous entries. \nDown arrow: load next entries.  \n'Insert': save all wavs and text. \n'[': Send current cut to beginning of next. \n']': Send next cut to end of current. \nUse mouse scroll wheel to navigate entries.")
+            add_same_line(spacing=40)
+            add_text("'7': current play. \n'8': current play to selection. \n'9': current play from selection. \n'4': next play. \n'5': next play to selection. \n'6': next play from selection. \n'0': stop playing.")
             add_spacing(count=5)
             add_button("open_csv_proofread", callback=open_csv_proofread_call, label="Open csv file")   
             add_same_line(spacing=50)     
