@@ -1,5 +1,5 @@
 # Automated-TTS-dataset-builder
-Transcribe audio via Google Speech to Text API with speaker separation (diarization). Automatically generate TTS dataset using audio and associated text. Make cuts under a custom length. Uses aeneas to force align text to audio. Create more source text and audio by splitting entries and combining end and beginning halves. Quickly proofread and edit cuts.
+Transcribe audio via Google Speech to Text API with speaker separation (diarization). Automatically generate TTS datasets using audio and associated text. Uses aeneas to force align text to audio. Create even more source text and audio by splitting entries and combining end and beginning halves. Quickly proofread and edit cuts.
 
 Run dataset_gui.py for GUI tools. 
 
@@ -10,7 +10,6 @@ Current limitations are that you will need to adjust column width of the proofre
 
 # Setup
 Linux environment is recommended. If using windows aeneas will not be able to make longer cuts due to memory issues. 
-In linux, install aeneas and pydub:
 
 wget https://raw.githubusercontent.com/readbeyond/aeneas/master/install_dependencies.sh
 
