@@ -28,6 +28,10 @@ pip install google-cloud-speech
 
 pip install google-cloud-storage
 
+pip install libasound2-dev
+
+pip install simpleaudio
+
 # Usage
 
 Video tutorial coming soon!
