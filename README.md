@@ -32,6 +32,9 @@ sudo apt install libasound2-dev
 
 pip install simpleaudio
 
+If you get libpython error: 
+export LD_LIBRARY_PATH=[homepath]/anaconda3/envs/[yourenv]/lib
+
 # Usage
 
 Video tutorial coming soon!
