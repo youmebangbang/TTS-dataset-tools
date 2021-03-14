@@ -17,7 +17,8 @@ import numpy as np
 import re
 import shutil
 from google.cloud import storage
-from google.cloud import speech as speech
+#from google.cloud import speech as speech
+from google.cloud import speech_v1p1beta1 as speech
 
 class Proofreader:
     def __init__(self):
@@ -317,9 +318,9 @@ class Dataset_builder:
                             text_out = text_out.strip() 
 
                             wav_cut = w[(beginning_cut*1000):(end_cut*1000)]
-                            new_wav_filename = "wavs/"  + str(index_count) + ".wav"                        
+                            new_wav_filename = "wavs/" + str(index_count) + ".wav"                        
                             new_csv_file.write("{}{}|{}".format(newline, new_wav_filename, text_out))
-                            wav_cut.export(output_wav_path + new_wav_filename, format="wav")
+                            wav_cut.export("{}/{}".format(self.project_name, new_wav_filename), format="wav")
                             index_count += 1
                             newline = '\n'
 
@@ -330,7 +331,7 @@ class Dataset_builder:
                         wav_cut = w[(beginning_cut*1000):(end_cut*1000)]
                         new_wav_filename =  "wavs/" + str(index_count) + ".wav"
                         new_csv_file.write("{}{}|{}".format(newline, new_wav_filename, text_out))
-                        wav_cut.export(output_wav_path + new_wav_filename, format="wav")
+                        wav_cut.export("{}/{}".format(self.project_name, new_wav_filename), format="wav")
                         index_count += 1
                         newline = '\n'
 
@@ -392,6 +393,9 @@ def transcribe_file(wavfile, bucket_name, project_name):
         sample_rate_hertz=int(sample_rate),
         language_code="en-US",
         enable_automatic_punctuation=True,
+        enable_word_time_offsets=True, 
+        enable_speaker_diarization=True,
+        diarization_speaker_count=int(get_value("input_diarization_num")),
     )
 
     operation = client.long_running_recognize(config=config, audio=audio)
@@ -405,20 +409,58 @@ def transcribe_file(wavfile, bucket_name, project_name):
         #     newline = '\n'
 
     result_array = []
-    newline = ""
-    #word_info_array = []
-    if not os.path.exists(project_name):
-        os.mkdir(project_name)
+
+    result = response.results[-1]
+    words = result.alternatives[0].words     
+
+    active_speaker = 1
+    text = []
+    transcript = []
+    current_cut = 0
+    previous_cut = 0
+    speaker_wavs = []
+
+    for x in range(int(get_value("input_diarization_num"))):
+        speaker_wavs.append(AudioSegment.empty())
+        transcript.append("")
+
+    w = AudioSegment.from_wav(wavfile)
+
+    for word in words:
+        if word.speaker_tag == active_speaker:
+            end_time = word.end_time
+            current_cut = end_time.total_seconds() * 1e3
+            #print(current_cut)
+            transcript[active_speaker-1] += word.word + ' '
+        else:
+            #speaker has changed
+            transcript[active_speaker-1] += word.word + ' '
+            w_cut = w[(previous_cut):current_cut]
+            previous_cut = current_cut
+            speaker_wavs[active_speaker-1] = speaker_wavs[active_speaker-1] + w_cut
+            active_speaker = word.speaker_tag
+
+    #finish last wav cut
+    w_cut = w[previous_cut:current_cut]
+    speaker_wavs[active_speaker-1] = speaker_wavs[active_speaker-1] + w_cut
+
+    for i, wave in enumerate(speaker_wavs):
+        speaker_wavs[i].export("{}/speaker_{}.wav".format(project_name, i+1), format="wav")
+
+    for i, text in enumerate(transcript):
+        f = open("{}/speaker_{}.txt".format(project_name, i+1), 'w')
+        f.write(transcript[i])
+        f.close()
+    
+    # f = open ("{}/transcribed.txt".format(project_name), 'w')
+    # for result in response.results:            
+    #     result_array.append(result.alternatives[0].transcript)        
         
-    with open ("{}/transcribed.txt".format(project_name), 'w') as f:
-        for result in response.results:            
-            result_array.append(result.alternatives[0].transcript)
-            #word_info_array.append(result.alternatives[0].words)
-            
-            print("Transcript: {}".format(result.alternatives[0].transcript))
-            #print("Confidence: {}".format(result.alternatives[0].confidence))                    
-        f.write("".join(result_array))
-            
+    #     print("Transcript: {}".format(result.alternatives[0].transcript))
+    #     #print("Confidence: {}".format(result.alternatives[0].confidence))                    
+    # f.write("".join(result_array))
+    # f.close()
+
     set_value("label_wav_file_transcribe", "Done!")    
 
 
@@ -707,7 +749,11 @@ def current_remove_call(sender, data):
     current_path = get_table_item("table_proofread", row, 0)
     path = Path(current_path)
     #shutil.copy("{}/{}".format(proofreader.get_project_path(), current_path), "{}/wavs/removed_{}".format(proofreader.get_project_path(), path.name))
-    delete_row("table_proofread", row)  
+    delete_row("table_proofread", row)
+    #update status text
+    set_value("proofread_status", "Removed entry {}".format(current_path))  
+    proofreader.plot_wavs()
+
 
 def next_remove_call(sender, data): 
     if proofreader.get_next() == None:
@@ -717,7 +763,9 @@ def next_remove_call(sender, data):
     path = Path(next_path)
     #shutil.copy("{}/{}".format(proofreader.get_project_path(), next_path), "{}/wavs/removed_{}".format(proofreader.get_project_path(), path.name))
     delete_row("table_proofread", row + 1)
-    
+    #update status text
+    set_value("proofread_status", "Removed entry {}".format(next_path))      
+    proofreader.plot_wavs()
 
 def stop_playing_call(sender, data):
     proofreader.stop()
@@ -767,6 +815,10 @@ def mouse_wheel_proofread_call(sender, data):
         if data < 0:
             proofreader.scroll_down()
 
+def mouse_drag_call(sender,data):
+    #mouse drag window for cuts
+    pass
+
 
 def render_call(sender, data):
     if is_key_pressed(mvKey_Up):
@@ -813,7 +865,7 @@ def render_call(sender, data):
     if is_key_pressed(mvKey_NumPad0):
         proofreader.stop()
 
-set_main_window_size(1600, 1040)
+set_main_window_size(1500, 1040)
 set_main_window_title("DeepVoice Dataset Creator / Editor 1.0 by YouMeBangBang")
 #set_global_font_scale(1.5)
 
@@ -825,7 +877,7 @@ set_theme("Dark")
 proofreader = Proofreader()
 set_mouse_click_callback(mouse_clicked_proofread_call)
 set_mouse_wheel_callback(mouse_wheel_proofread_call)
-add_additional_font("CheyenneSans-Light.otf", 20)
+add_additional_font("CheyenneSans-Light.otf", 19)
 
 set_render_callback(render_call)
 
@@ -834,7 +886,7 @@ with window("mainWin"):
     with tab_bar("tb1"):
         with tab("tab0", label="Transcribe Audio"):
             add_spacing(count=5)
-            add_text("For Google Speech to Text API you will need a Google Cloud Platform account.\n\nYour $GOOGLE_APPLICATION_CREDENTIALS must point to your credentials JSON file. \n\nText will be saved to [project name]/transcribed.txt")
+            add_text("For Google Speech to Text API you will need a Google Cloud Platform account.\n\nYour $GOOGLE_APPLICATION_CREDENTIALS must point to your credentials JSON file.")
             add_spacing(count=5)
             add_text("Enter name of project: ")
             add_same_line(spacing=10)
@@ -842,7 +894,11 @@ with window("mainWin"):
             add_spacing(count=5)
             add_text("Enter name of your clould storage bucket: ")
             add_same_line(spacing=10)
-            add_input_text("input_storage_bucket", width=200, default_value="my_bucket", label="") 
+            add_input_text("input_storage_bucket", width=200, default_value="youmebangbang_bucket", label="")
+            add_spacing(count=5)
+            add_text("How many speakers for diarization?: ")
+            add_same_line(spacing=10)            
+            add_input_text("input_diarization_num", width=40, default_value="1", label="")
             add_spacing(count=5)
             add_text("Select the wav file to transcribe (must be mono)")
             add_button("open_wav_file_transcribe", callback=open_wav_file_transcribe_call, label="Open wav file") 
@@ -854,9 +910,11 @@ with window("mainWin"):
 
         with tab("tab1", label="Build Dataset"):
             add_spacing(count=5)
+            add_text("Results will be appended to [project name]/output.csv")
+            add_spacing(count=5)
             add_text("Enter name of project: ")
             add_same_line(spacing=10)
-            add_input_text("input_project_name", width=200, default_value="myproject", label="") 
+            add_input_text("input_project_name", width=200, default_value="MyProject", label="") 
             add_spacing(count=5)
             add_text("Enter starting index (default is 1): ")
             add_same_line(spacing=10)
@@ -905,8 +963,8 @@ with window("mainWin"):
             add_same_line(spacing=10)
             add_label_text("proofread_status", label="")
             add_spacing(count=3)
-            add_table("table_proofread", ["Wav path", "Text"], callback=table_row_selected_call)
-            add_spacing(count=5)
+            add_table("table_proofread", ["Wav path", "Text"], callback=table_row_selected_call, height=200)
+            add_spacing(count=2)
             add_input_text("current_input_text", width=1200, default_value="", label="" )
             add_same_line(spacing=10)
             add_button("save_all", callback=save_all_call, label="Save all")             
