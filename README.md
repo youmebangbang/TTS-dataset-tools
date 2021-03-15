@@ -9,7 +9,7 @@ Current limitations are that you will need to adjust column width of the proofre
 
 
 # Setup
-Linux environment is recommended. If using windows aeneas will not be able to make longer cuts due to memory issues. 
+Linux environment is recommended for the dataset builder as using windows aeneas will not be able to make longer cuts due to memory issues. 
 
 wget https://raw.githubusercontent.com/readbeyond/aeneas/master/install_dependencies.sh
 
