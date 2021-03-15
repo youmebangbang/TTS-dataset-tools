@@ -47,8 +47,10 @@ class Proofreader:
 
         set_value("current_input_text", get_table_item("table_proofread", row, 1))
         set_value("next_input_text", get_table_item("table_proofread", row+1, 1))
-        set_value("wav_current_label", current_path)
-        set_value("wav_next_label", next_path)
+        configure_item("current_plot", label=current_path)
+        configure_item("next_plot", label=next_path)
+        # set_value("wav_current_label", current_path)
+        # set_value("wav_next_label", next_path)
         self.set_current(current_wav)
         self.set_next(next_wav)
         self.plot_wavs()
@@ -70,8 +72,10 @@ class Proofreader:
 
         set_value("current_input_text", get_table_item("table_proofread", row, 1))
         set_value("next_input_text", get_table_item("table_proofread", row+1, 1))
-        set_value("wav_current_label", current_path)
-        set_value("wav_next_label", next_path)
+        configure_item("current_plot", label=current_path)
+        configure_item("next_plot", label=next_path)
+        # set_value("wav_current_label", current_path)
+        # set_value("wav_next_label", next_path)
         proofreader.set_current(current_wav)
         proofreader.set_next(next_wav)
         proofreader.plot_wavs()
@@ -563,12 +567,62 @@ def add_csv_file_proofread_call(sender, data):
     proofreader.set_rate(sample_rate)
     set_value("current_input_text", get_table_item("table_proofread", 0, 1))
     set_value("next_input_text", get_table_item("table_proofread", 1, 1))
-    set_value("wav_current_label", current_path)
-    set_value("wav_next_label", next_path)
+    configure_item("current_plot", label=current_path)
+    configure_item("next_plot", label=next_path)
+    # set_value("wav_current_label", current_path)
+    # set_value("wav_next_label", next_path)
     proofreader.set_project_path(data[0])
     proofreader.set_current(current_wav)
     proofreader.set_next(next_wav)
     proofreader.plot_wavs()
+
+def current_delete_beginningcut_call(sender, data):
+    w_current = proofreader.get_current()
+    if proofreader.get_current() == None:
+        return 
+    num_samples = len(w_current.get_array_of_samples())
+    point = proofreader.get_current_point()
+    if point:
+        point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000        
+        w_current = w_current[point:]
+        proofreader.set_current(w_current)
+        proofreader.plot_wavs()
+
+def current_delete_endcut_call(sender, data):    
+    w_current = proofreader.get_current()
+    if proofreader.get_current() == None:
+        return 
+    num_samples = len(w_current.get_array_of_samples())
+    point = proofreader.get_current_point()
+    if point:
+        point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000        
+        w_current = w_current[:point]
+        proofreader.set_current(w_current)
+        proofreader.plot_wavs()
+
+def next_delete_beginningcut_call(sender, data):
+    w_next = proofreader.get_next()
+    if proofreader.get_next() == None:
+        return 
+    num_samples = len(w_next.get_array_of_samples())
+    point = proofreader.get_next_point()
+    if point:
+        point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000        
+        w_next = w_next[point:]
+        proofreader.set_next(w_next)
+        proofreader.plot_wavs()
+
+def next_delete_endcut_call(sender, data):
+    w_next = proofreader.get_next()
+    if proofreader.get_next() == None:
+        return 
+    num_samples = len(w_next.get_array_of_samples())
+    point = proofreader.get_next_point()
+    if point:
+        point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000        
+        w_next = w_next[:point]
+        proofreader.set_next(w_next)
+        proofreader.plot_wavs()
 
 def save_current_text_call(sender, data):
     if proofreader.get_current() == None:
@@ -790,15 +844,17 @@ def table_row_selected_call(sender, data):
 
     set_value("current_input_text", get_table_item("table_proofread", row, 1))
     set_value("next_input_text", get_table_item("table_proofread", row+1, 1))
-    set_value("wav_current_label", current_path)
-    set_value("wav_next_label", next_path)
+
+    configure_item("current_plot", label=current_path)
+    configure_item("next_plot", label=next_path)
+    #set_value("wav_current_label", current_path)
+    #set_value("wav_next_label", next_path)
     proofreader.set_current(current_wav)
     proofreader.set_next(next_wav)
     #set_item_style_var("current_plot", mvGuiStyleVar_Name, "")
     proofreader.plot_wavs()
 
 def mouse_clicked_proofread_call(sender, data):
-    #mouse_plot_pos = get_plot_mouse_pos()
     mouse_pos = get_mouse_pos(local=False)
     point = mouse_pos[0]
     #offset
@@ -814,10 +870,6 @@ def mouse_wheel_proofread_call(sender, data):
             proofreader.scroll_up()
         if data < 0:
             proofreader.scroll_down()
-
-def mouse_drag_call(sender,data):
-    #mouse drag window for cuts
-    pass
 
 
 def render_call(sender, data):
@@ -946,66 +998,70 @@ with window("mainWin"):
 
         with tab("tab2", label="Proofread Dataset"):
             tabledata = []
-            add_spacing(count=5)
-            add_text("ALWAYS BACKUP PROJECT FOLDER BEFORE EDITING! \n\n\nChoose a csv file to proofread and edit wavs. \nYou can adjust the column width for better viewing.")
+            with group("group3"):
+                add_text("ALWAYS BACKUP PROJECT FOLDER BEFORE EDITING! \n\nChoose a csv file to proofread and edit wavs. \nYou can adjust the column width for better viewing.")
             add_same_line(spacing=100) 
-            add_text("Keyboard shortcuts-")
-            add_same_line(spacing=10) 
-            add_text("Up arrow: load previous entries. \nDown arrow: load next entries.  \n'Insert': save all wavs and text. \n'[': Send current cut to beginning of next. \n']': Send next cut to end of current. \nUse mouse scroll wheel to navigate entries.")
-            add_same_line(spacing=40)
-            add_text("'7': current play. \n'8': current play to selection. \n'9': current play from selection. \n'4': next play. \n'5': next play to selection. \n'6': next play from selection. \n'0': stop playing.")
-            add_spacing(count=5)
+            with group("group4"):
+                add_text("Keyboard shortcuts-")
+                add_text("Up arrow: load previous entries. \nDown arrow: load next entries.  \n'Insert': save all wavs and text. \n'[': Send current cut to beginning of next. \n']': Send next cut to end of current. \nUse mouse scroll wheel to navigate entries.")
+                add_same_line(spacing=40)
+                add_text("'7': current play. \n'8': current play to selection. \n'9': current play from selection. \n'4': next play. \n'5': next play to selection. \n'6': next play from selection. \n'0': stop playing.") 
             add_button("open_csv_proofread", callback=open_csv_proofread_call, label="Open csv file")   
             add_same_line(spacing=50)     
             add_button("save_csv_proofread", callback=save_csv_proofread_call, label="Save csv file:")                    
             add_same_line(spacing=10)     
-            add_input_text("proofread_project_name", width=200, default_value="", label="" ) 
-            add_same_line(spacing=10)
+            add_input_text("proofread_project_name", width=250, default_value="", label="" ) 
+            add_same_line(spacing=10) 
             add_label_text("proofread_status", label="")
+     
             add_spacing(count=3)
+
             add_table("table_proofread", ["Wav path", "Text"], callback=table_row_selected_call, height=200)
             add_spacing(count=2)
-            add_input_text("current_input_text", width=1200, default_value="", label="" )
-            add_same_line(spacing=10)
-            add_button("save_all", callback=save_all_call, label="Save all")             
-            add_plot("current_plot", label="Current Wav", width=1200, height=200, xaxis_no_tick_labels=True,  
-                yaxis_no_tick_labels=True, no_mouse_pos=True, crosshairs=True, xaxis_lock_min=True, xaxis_lock_max=True, yaxis_lock_min=True, yaxis_lock_max=True)
-            add_same_line(spacing=10)
-            with group("group1"):
+
+            with group("group5"):
+                add_input_text("current_input_text", width=1200, default_value="", label="" )
+                add_plot("current_plot", label="Current Wav", width=1200, height=200, xaxis_no_tick_labels=True,  
+                    yaxis_no_tick_labels=True, no_mouse_pos=True, crosshairs=True, xaxis_lock_min=True, xaxis_lock_max=True, yaxis_lock_min=True, yaxis_lock_max=True)
+                add_drawing("current_plot_drawing", width=1200, height=16)
+            add_same_line(spacing=10)      
+            with group("group1"): 
+                add_button("save_all", callback=save_all_call, label="Save all")    
+                add_same_line(spacing=10)
                 add_button("current_play", callback=current_play_call, label="Play")
                 add_same_line(spacing=10)
                 add_image_button("stop_playing", "stop.png", callback=stop_playing_call, height=20, width=20, background_color=[0,0,0,255])  
-                add_same_line(spacing=10)
-                add_label_text("wav_current_label", label="") 
                 add_button("current_play_to_selection", callback=current_play_to_selection_call, label="Play to selection")       
                 add_button("current_play_from_selection", callback=current_play_from_selection_call, label="Play from selection")  
                 add_button("current_send", callback=current_send_call, label="Send end cut to Next")  
                 #add_button("current_save", callback=current_save_call, label="Save wav")
                 add_spacing(count=5)   
+                add_button("current_delete_endcut", callback=current_delete_endcut_call, label="Cut and delete end")
+                add_button("current_delete_beginningcut", callback=current_delete_beginningcut_call, label="Cut and delete beginning")
                 add_button("current_remove", callback=current_remove_call, label="Remove entry!")
-            add_drawing("current_plot_drawing", width=1200, height=16)
             proofreader.current_plot_drawing_set_point(0)
 
             add_spacing(count=5)
-            add_input_text("next_input_text", width=1200, default_value="", label="" )
-            add_same_line(spacing=10)
-            add_button("save_all2", callback=save_all_call, label="Save all")             
-            add_plot("next_plot", label="Next Wav", width=1200, height=200, xaxis_no_tick_labels=True, 
-                yaxis_no_tick_labels=True, no_mouse_pos=True, crosshairs=True, xaxis_lock_min=True, xaxis_lock_max=True, yaxis_lock_min=True, yaxis_lock_max=True)
+            with group("group6"):
+                add_input_text("next_input_text", width=1200, default_value="", label="" )      
+                add_plot("next_plot", label="Next Wav", width=1200, height=200, xaxis_no_tick_labels=True, 
+                    yaxis_no_tick_labels=True, no_mouse_pos=True, crosshairs=True, xaxis_lock_min=True, xaxis_lock_max=True, yaxis_lock_min=True, yaxis_lock_max=True)
+                add_drawing("next_plot_drawing", width=1200, height=10)  
             add_same_line(spacing=10)
             with group("group2"):
+                add_button("save_all2", callback=save_all_call, label="Save all")   
+                add_same_line(spacing=10) 
                 add_button("next_play", callback=next_play_call, label="Play")
                 add_same_line(spacing=10)
-                add_image_button("stop_playing2", "stop.png", callback=stop_playing_call, height=20, width=20, background_color=[0,0,0,255])  
-                add_same_line(spacing=10)                  
-                add_label_text("wav_next_label", label="")        
+                add_image_button("stop_playing2", "stop.png", callback=stop_playing_call, height=20, width=20, background_color=[0,0,0,255])       
                 add_button("next_play_to_selection", callback=next_play_to_selection_call, label="Play to selection")  
                 add_button("next_play_from_selection", callback=next_play_from_selection_call, label="Play from selection")  
                 add_button("next_send", callback=next_send_call, label="Send beginning cut to Current")  
                 #add_button("next_save", callback=next_save_call, label="Save wav")    
                 add_spacing(count=5)   
+                add_button("next_delete_endcut", callback=next_delete_endcut_call, label="Cut and delete end")
+                add_button("next_delete_beginningcut", callback=next_delete_beginningcut_call, label="Cut and delete beginning")                 
                 add_button("next_remove", callback=next_remove_call, label="Remove entry!")            
-            add_drawing("next_plot_drawing", width=1200, height=10)  
             proofreader.next_plot_drawing_set_point(0)
 
         with tab("tab3", label="Increase Dataset"):
