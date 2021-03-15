@@ -57,7 +57,7 @@ class Proofreader:
 
     def scroll_down(self):        
         row = proofreader.get_selected_row()
-        if proofreader.get_num_items() == (row + 2):
+        if proofreader.get_num_items() <= (row + 2):
             return
         if proofreader.get_current() == None:
             return
@@ -800,12 +800,33 @@ def current_remove_call(sender, data):
     if proofreader.get_current() == None:
         return
     row = proofreader.get_selected_row()
+    if proofreader.get_num_items() <= (row + 2):
+        return
     current_path = get_table_item("table_proofread", row, 0)
     path = Path(current_path)
     #shutil.copy("{}/{}".format(proofreader.get_project_path(), current_path), "{}/wavs/removed_{}".format(proofreader.get_project_path(), path.name))
     delete_row("table_proofread", row)
     #update status text
     set_value("proofread_status", "Removed entry {}".format(current_path))  
+
+    #update plots
+    proofreader.set_selected_row(row)
+    
+    current_path = get_table_item("table_proofread", row, 0)
+    next_path = get_table_item("table_proofread", row+1, 0)
+
+    current_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), current_path))
+    next_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), next_path))
+
+    set_value("current_input_text", get_table_item("table_proofread", row, 1))
+    set_value("next_input_text", get_table_item("table_proofread", row+1, 1))
+
+    configure_item("current_plot", label=current_path)
+    configure_item("next_plot", label=next_path)
+    #set_value("wav_current_label", current_path)
+    #set_value("wav_next_label", next_path)
+    proofreader.set_current(current_wav)
+    proofreader.set_next(next_wav)
     proofreader.plot_wavs()
 
 
@@ -818,7 +839,25 @@ def next_remove_call(sender, data):
     #shutil.copy("{}/{}".format(proofreader.get_project_path(), next_path), "{}/wavs/removed_{}".format(proofreader.get_project_path(), path.name))
     delete_row("table_proofread", row + 1)
     #update status text
-    set_value("proofread_status", "Removed entry {}".format(next_path))      
+    set_value("proofread_status", "Removed entry {}".format(next_path)) 
+
+    proofreader.set_selected_row(row)
+    
+    current_path = get_table_item("table_proofread", row, 0)
+    next_path = get_table_item("table_proofread", row+1, 0)
+
+    current_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), current_path))
+    next_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), next_path))
+
+    set_value("current_input_text", get_table_item("table_proofread", row, 1))
+    set_value("next_input_text", get_table_item("table_proofread", row+1, 1))
+
+    configure_item("current_plot", label=current_path)
+    configure_item("next_plot", label=next_path)
+    #set_value("wav_current_label", current_path)
+    #set_value("wav_next_label", next_path)
+    proofreader.set_current(current_wav)
+    proofreader.set_next(next_wav)        
     proofreader.plot_wavs()
 
 def stop_playing_call(sender, data):
@@ -830,7 +869,7 @@ def table_row_selected_call(sender, data):
     col = index[0][1]        
     set_table_selection("table_proofread", row, col, False) 
 
-    if proofreader.get_num_items() == (row + 1):
+    if proofreader.get_num_items() <= (row + 1):
         return
 
     #set the last row clicked information
