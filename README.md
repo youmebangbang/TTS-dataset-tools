@@ -5,7 +5,7 @@ Run dataset_gui.py for GUI tools.
 
 Current limitations are that you will need to adjust column width of the proofreading section and when navigating entries you must take the focus off the current and next input text boxes or the text box will not update. Next version of dearpy gui will solve these issues.
 
-Using a VPN will interfere with Google Speech to Text API requests!
+Using a VPN will interfere with Google Speech to Text API requests.
 
 ![Dataset GUI](https://github.com/youmebangbang/Automated-TTS-dataset-builder/blob/master/dataset_gui.png)
 
