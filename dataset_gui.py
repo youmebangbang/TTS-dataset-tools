@@ -465,7 +465,8 @@ def transcribe_file(wavfile, bucket_name, project_name):
     # f.write("".join(result_array))
     # f.close()
 
-    set_value("label_wav_file_transcribe", "Done!")    
+    set_value("label_wav_file_transcribe", "Done!")   
+    print('\a') #system beep 
 
 
 #Functions / callbacks for Google Speech
@@ -926,6 +927,13 @@ def mouse_wheel_proofread_call(sender, data):
 
 
 def render_call(sender, data):
+    if is_key_pressed(mvKey_Escape):
+        save_current_text_call("","")  
+        save_next_text_call("","") 
+
+    if is_key_pressed(mvKey_Control) and is_key_pressed(mvKey_S):
+        save_csv_proofread_call("", "")
+
     if is_key_pressed(mvKey_Up):
         #move to previous entries
         proofreader.scroll_up()
@@ -982,7 +990,7 @@ set_theme("Dark")
 proofreader = Proofreader()
 set_mouse_click_callback(mouse_clicked_proofread_call)
 set_mouse_wheel_callback(mouse_wheel_proofread_call)
-add_additional_font("CheyenneSans-Light.otf", 19)
+add_additional_font("CheyenneSans-Light.otf", 21)
 
 set_render_callback(render_call)
 
