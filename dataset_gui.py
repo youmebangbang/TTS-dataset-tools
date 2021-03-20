@@ -32,6 +32,8 @@ class Proofreader:
         self.num_items = 0
 
     def scroll_up(self):
+        if is_item_active("current_input_text") or is_item_active("next_input_text"):
+            return
         row = self.get_selected_row()
         if row == 0:
             return
@@ -55,7 +57,9 @@ class Proofreader:
         self.set_next(next_wav)
         self.plot_wavs()
 
-    def scroll_down(self):        
+    def scroll_down(self):     
+        if is_item_active("current_input_text") or is_item_active("next_input_text"):
+            return   
         row = proofreader.get_selected_row()
         if proofreader.get_num_items() <= (row + 2):
             return
@@ -341,6 +345,9 @@ class Dataset_builder:
 
             new_csv_file.close()
             set_value("label_build_status", "Building dataset done!")
+            #Remove temporary directories
+            shutil.rmtree("aeaneas_prepped")
+            shutil.rmtree("aeneeas_out")
 
 
 def upload_blob(bucket_name, source_file_name, destination_blob_name):
@@ -547,12 +554,15 @@ def add_csv_file_proofread_call(sender, data):
     with open(path, 'r') as csv_file:            
         csv_reader = csv.reader(csv_file, delimiter='|')
         num_items = 0
-        for row in csv_reader:             
+        for row in csv_reader:          
             #wav_filename should include path to wav file
             wav_filename_with_path = row[0] 
             text = row[1]
-            add_row("table_proofread", [wav_filename_with_path, text])
-            num_items += 1
+            #Check if row is blank!   
+            if text:
+                add_row("table_proofread", [wav_filename_with_path, text])
+                num_items += 1
+            
         proofreader.set_num_items(num_items)
 
     #get values from first 2 rows
@@ -927,10 +937,6 @@ def mouse_wheel_proofread_call(sender, data):
 
 
 def render_call(sender, data):
-    if is_key_pressed(mvKey_Escape):
-        save_current_text_call("","")  
-        save_next_text_call("","") 
-
     if is_key_pressed(mvKey_Control) and is_key_pressed(mvKey_S):
         save_csv_proofread_call("", "")
 
@@ -957,25 +963,25 @@ def render_call(sender, data):
         next_save_call("","") 
         set_value("proofread_status", "All saved")
        
-    if is_key_pressed(mvKey_NumPad7):
+    if is_key_pressed(mvKey_Prior):
         current_play_call("","") 
 
-    if is_key_pressed(mvKey_NumPad8):
+    if is_key_pressed(mvKey_F9):
         current_play_to_selection_call("","") 
 
-    if is_key_pressed(mvKey_NumPad9):
+    if is_key_pressed(mvKey_F10):
         current_play_from_selection_call("","") 
 
-    if is_key_pressed(mvKey_NumPad4):
+    if is_key_pressed(mvKey_Next):
         next_play_call("","") 
 
-    if is_key_pressed(mvKey_NumPad5):
+    if is_key_pressed(mvKey_F11):
         next_play_to_selection_call("","") 
 
-    if is_key_pressed(mvKey_NumPad6):
+    if is_key_pressed(mvKey_F12):
         next_play_from_selection_call("","") 
     
-    if is_key_pressed(mvKey_NumPad0):
+    if is_key_pressed(mvKey_Pause):
         proofreader.stop()
 
 set_main_window_size(1500, 1040)
@@ -1066,7 +1072,7 @@ with window("mainWin"):
                 add_text("Keyboard shortcuts-")
                 add_text("Up arrow: load previous entries. \nDown arrow: load next entries.  \n'Insert': save all wavs and text. \n'[': Send current cut to beginning of next. \n']': Send next cut to end of current. \nUse mouse scroll wheel to navigate entries.")
                 add_same_line(spacing=40)
-                add_text("'7': current play. \n'8': current play to selection. \n'9': current play from selection. \n'4': next play. \n'5': next play to selection. \n'6': next play from selection. \n'0': stop playing.") 
+                add_text("'PgUp': current play. \n'F9': current play to selection. \n'F10': current play from selection. \n'PgDwn': next play. \n'F11': next play to selection. \n'F12': next play from selection. \n'Pause-Break': stop playing.") 
             add_button("open_csv_proofread", callback=open_csv_proofread_call, label="Open csv file")   
             add_same_line(spacing=50)     
             add_button("save_csv_proofread", callback=save_csv_proofread_call, label="Save csv file:")                    
