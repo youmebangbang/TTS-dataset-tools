@@ -346,8 +346,8 @@ class Dataset_builder:
             new_csv_file.close()
             set_value("label_build_status", "Building dataset done!")
             #Remove temporary directories
-            shutil.rmtree("aeaneas_prepped")
-            shutil.rmtree("aeneeas_out")
+            shutil.rmtree("aeneas_prepped")
+            shutil.rmtree("aeneas_out")
 
 
 def upload_blob(bucket_name, source_file_name, destination_blob_name):
@@ -1103,8 +1103,8 @@ with window("mainWin"):
                 add_button("current_send", callback=current_send_call, label="Send end cut to Next")  
                 #add_button("current_save", callback=current_save_call, label="Save wav")
                 add_spacing(count=5)   
-                add_button("current_delete_endcut", callback=current_delete_endcut_call, label="Cut and delete end")
                 add_button("current_delete_beginningcut", callback=current_delete_beginningcut_call, label="Cut and delete beginning")
+                add_button("current_delete_endcut", callback=current_delete_endcut_call, label="Cut and delete end")
                 add_button("current_remove", callback=current_remove_call, label="Remove entry!")
             proofreader.current_plot_drawing_set_point(0)
 
@@ -1126,12 +1126,15 @@ with window("mainWin"):
                 add_button("next_send", callback=next_send_call, label="Send beginning cut to Current")  
                 #add_button("next_save", callback=next_save_call, label="Save wav")    
                 add_spacing(count=5)   
-                add_button("next_delete_endcut", callback=next_delete_endcut_call, label="Cut and delete end")
                 add_button("next_delete_beginningcut", callback=next_delete_beginningcut_call, label="Cut and delete beginning")                 
+                add_button("next_delete_endcut", callback=next_delete_endcut_call, label="Cut and delete end")
                 add_button("next_remove", callback=next_remove_call, label="Remove entry!")            
             proofreader.next_plot_drawing_set_point(0)
 
         with tab("tab3", label="Increase Dataset"):
+            add_spacing(count=5)           
+
+        with tab("tab4", label="Other Tools"):
             add_spacing(count=5)           
 
 
