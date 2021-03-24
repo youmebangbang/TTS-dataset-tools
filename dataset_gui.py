@@ -674,6 +674,7 @@ def save_all_call(sender, data):
     next_save_call("","")
 
 def current_play_from_selection_call(sender, data):
+    proofreader.stop()
     w_current = proofreader.get_current()
     if w_current == None:
         return
@@ -693,6 +694,7 @@ def current_play_from_selection_call(sender, data):
         # )
 
 def current_play_to_selection_call(sender, data):
+    proofreader.stop()
     w_current = proofreader.get_current()
     if w_current == None:
         return
@@ -712,6 +714,7 @@ def current_play_to_selection_call(sender, data):
         # )
 
 def next_play_to_selection_call(sender, data):
+    proofreader.stop()
     w_next = proofreader.get_next()
     if w_next == None:
         return
@@ -731,6 +734,7 @@ def next_play_to_selection_call(sender, data):
         # )
 
 def next_play_from_selection_call(sender, data):
+    proofreader.stop()
     w_next = proofreader.get_next()
     if w_next == None:
         return
@@ -784,6 +788,7 @@ def next_send_call(sender, data):
         proofreader.plot_wavs()         
 
 def current_play_call(sender, data):
+    proofreader.stop()
     wav = proofreader.get_current()
     if wav == None:
         return
@@ -796,6 +801,7 @@ def current_play_call(sender, data):
     # )
 
 def next_play_call(sender, data):
+    proofreader.stop()
     wav = proofreader.get_next()
     if wav == None:
         return
@@ -935,6 +941,10 @@ def mouse_wheel_proofread_call(sender, data):
         if data < 0:
             proofreader.scroll_down()
 
+themes = ["Dark", "Light", "Classic", "Dark 2", "Grey", "Dark Grey", "Cherry", "Purple", "Gold", "Red"]
+def apply_theme_call(sender, data):
+    theme = get_value("Themes")
+    set_theme(theme)       
 
 def render_call(sender, data):
     if is_key_pressed(mvKey_Control) and is_key_pressed(mvKey_S):
@@ -1107,7 +1117,6 @@ with window("mainWin"):
                 add_button("current_delete_endcut", callback=current_delete_endcut_call, label="Cut and delete end")
                 add_button("current_remove", callback=current_remove_call, label="Remove entry!")
             proofreader.current_plot_drawing_set_point(0)
-
             add_spacing(count=5)
             with group("group6"):
                 add_input_text("next_input_text", width=1200, default_value="", label="" )      
@@ -1135,7 +1144,9 @@ with window("mainWin"):
             add_spacing(count=5)           
 
         with tab("tab4", label="Other Tools"):
-            add_spacing(count=5)           
+            add_spacing(count=5)  
+            add_combo("Themes", items=themes, default_value="Dark", callback=apply_theme_call)
+            
 
 
 start_dearpygui(primary_window="mainWin")
