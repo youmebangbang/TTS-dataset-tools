@@ -1,4 +1,4 @@
-# Automated-TTS-dataset-builder
+# TTS-dataset-tools
 Transcribe audio via Google Speech to Text API with speaker separation (diarization). Automatically generate TTS datasets using audio and associated text. Uses aeneas to force align text to audio. Create even more source text and audio by splitting entries and combining end and beginning halves. Quickly proofread and edit cuts.
 
 Run dataset_gui.py for GUI tools. 
