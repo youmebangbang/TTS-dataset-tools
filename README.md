@@ -31,12 +31,25 @@ pip install google-cloud-speech
 
 pip install google-cloud-storage
 
-sudo apt install libasound2-dev
-
 pip install simpleaudio
 
 If you get libpython error: 
-export LD_LIBRARY_PATH=[homepath]/anaconda3/envs/[yourenv]/lib
+
+sudo apt install libasound2-dev
+
+edit your bashrc file by typing: sudo nano ~/.bashrc
+
+Then add the line at the end with your info depending where your package was installed: 
+
+export LD_LIBRARY_PATH=[homepath]/anaconda3/envs/[yourenv]/lib/
+
+OR
+
+export LD_LIBRARY_PATH=[homepath]/.conda/envs/[yourenv]/lib/
+
+Press CTRL+o to export the updated file. Then CTRL+x to exit.
+
+Type source ~/.bashrc to enable the new path.
 
 # Usage
 
