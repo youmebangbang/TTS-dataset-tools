@@ -19,6 +19,35 @@ import shutil
 from google.cloud import storage
 #from google.cloud import speech as speech
 from google.cloud import speech_v1p1beta1 as speech
+from threading import Timer
+from time import sleep
+
+
+class RepeatedTimer(object):
+    def __init__(self, interval, function, *args, **kwargs):
+        self._timer     = None
+        self.interval   = interval
+        self.function   = function
+        self.args       = args
+        self.kwargs     = kwargs
+        self.is_running = False
+        self.start()
+
+    def _run(self):
+        self.is_running = False
+        self.start()
+        self.function(*self.args, **self.kwargs)
+
+    def start(self):
+        if not self.is_running:
+            self._timer = Timer(self.interval, self._run)
+            self._timer.daemon = True
+            self._timer.start()
+            self.is_running = True
+
+    def stop(self):
+        self._timer.cancel()
+        self.is_running = False
 
 class Proofreader:
     def __init__(self):
@@ -30,6 +59,10 @@ class Proofreader:
         self.next_plot_point = None
         self.selected_row = 0
         self.num_items = 0
+
+    def autosave(self):
+        save_csv_proofread_call("", "autosave")
+        print("autosaving to autosave.csv")
 
     def scroll_up(self):
         if is_item_active("current_input_text") or is_item_active("next_input_text"):
@@ -46,6 +79,7 @@ class Proofreader:
 
         current_wav = AudioSegment.from_wav("{}/{}".format(self.get_project_path(), current_path))
         next_wav = AudioSegment.from_wav("{}/{}".format(self.get_project_path(), next_path))
+        #check to see if wav is empty?
 
         set_value("current_input_text", get_table_item("table_proofread", row, 1))
         set_value("next_input_text", get_table_item("table_proofread", row+1, 1))
@@ -527,19 +561,34 @@ def save_csv_proofread_call(sender, data):
     name = get_value("proofread_project_name")
     if name:
         newline = ""
-        with open("{}/{}".format(proofreader.get_project_path(), name), 'w') as csv_file:
-            table = get_table_data("table_proofread")
-            for row in table:
-                csv_file.write("{}{}|{}".format(newline, row[0], row[1]))
-                newline = "\n"
-        set_value("proofread_status", "{}/{} saved".format(proofreader.get_project_path(), name))
-    #logging
-    with open("{}/logfile.txt".format(proofreader.get_project_path()), 'a') as log_file:
-        t = datetime.datetime.now()
-        tt = t.strftime("%c")
-        row = proofreader.get_selected_row()
-        last_wav = get_table_item("table_proofread", row, 0)
-        log_file.write("\n{}: Saved {} Last item selected: {}".format(tt, name, last_wav))
+        if data == "autosave":
+            with open("{}/{}".format(proofreader.get_project_path(), "autosave.csv"), 'w') as csv_file:
+                table = get_table_data("table_proofread")
+                for row in table:
+                    csv_file.write("{}{}|{}".format(newline, row[0], row[1]))
+                    newline = "\n"
+            set_value("proofread_status", "{}/{} saved".format(proofreader.get_project_path(), "autosave.csv"))            
+            #logging
+            with open("{}/logfile.txt".format(proofreader.get_project_path()), 'a') as log_file:
+                t = datetime.datetime.now()
+                tt = t.strftime("%c")
+                row = proofreader.get_selected_row()
+                last_wav = get_table_item("table_proofread", row, 0)
+                log_file.write("\n{}: Saved {} Last item selected: {}".format(tt, "autosave.csv", last_wav))            
+        else:
+            with open("{}/{}".format(proofreader.get_project_path(), name), 'w') as csv_file:
+                table = get_table_data("table_proofread")
+                for row in table:
+                    csv_file.write("{}{}|{}".format(newline, row[0], row[1]))
+                    newline = "\n"
+            set_value("proofread_status", "{}/{} saved".format(proofreader.get_project_path(), name))
+            #logging
+            with open("{}/logfile.txt".format(proofreader.get_project_path()), 'a') as log_file:
+                t = datetime.datetime.now()
+                tt = t.strftime("%c")
+                row = proofreader.get_selected_row()
+                last_wav = get_table_item("table_proofread", row, 0)
+                log_file.write("\n{}: Saved {} Last item selected: {}".format(tt, name, last_wav))
         
 
 def open_csv_proofread_call(sender, data):
@@ -586,6 +635,9 @@ def add_csv_file_proofread_call(sender, data):
     proofreader.set_current(current_wav)
     proofreader.set_next(next_wav)
     proofreader.plot_wavs()
+
+    #set autosave timer on
+    rt.start()
 
 def current_delete_beginningcut_call(sender, data):
     w_current = proofreader.get_current()
@@ -995,7 +1047,7 @@ def render_call(sender, data):
         proofreader.stop()
 
 set_main_window_size(1500, 1040)
-set_main_window_title("DeepVoice Dataset Creator / Editor 1.0 by YouMeBangBang")
+set_main_window_title("DeepVoice Dataset Tools 1.0 by YouMeBangBang")
 #set_global_font_scale(1.5)
 
 
@@ -1009,6 +1061,10 @@ set_mouse_wheel_callback(mouse_wheel_proofread_call)
 add_additional_font("CheyenneSans-Light.otf", 21)
 
 set_render_callback(render_call)
+
+#set autosave timer
+rt = RepeatedTimer(180, proofreader.autosave)
+rt.stop()
 
 with window("mainWin"):
 
@@ -1145,8 +1201,8 @@ with window("mainWin"):
 
         with tab("tab4", label="Other Tools"):
             add_spacing(count=5)  
-            add_combo("Themes", items=themes, default_value="Dark", callback=apply_theme_call)
-            
+            add_combo("Themes", items=themes, width=100, default_value="Dark", callback=apply_theme_call)
+
 
 
 start_dearpygui(primary_window="mainWin")
