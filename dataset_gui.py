@@ -23,6 +23,7 @@ from threading import Timer
 from time import sleep
 from proofreader import *
 from dataset_builder import *
+import simpleaudio as sa
 
 
 class RepeatedTimer(object):
@@ -103,34 +104,34 @@ def save_csv_proofread_call(sender, data):
     name = get_value("proofread_project_name")
     if name:
         newline = ""
-        if data == "autosave":
-            with open("{}/{}".format(proofreader.get_project_path(), "autosave.csv"), 'w') as csv_file:
-                table = get_table_data("table_proofread")
-                for row in table:
-                    csv_file.write("{}{}|{}".format(newline, row[0], row[1]))
-                    newline = "\n"
-            set_value("proofread_status", "{}/{} saved".format(proofreader.get_project_path(), "autosave.csv"))            
-            #logging
-            with open("{}/logfile.txt".format(proofreader.get_project_path()), 'a') as log_file:
-                t = datetime.datetime.now()
-                tt = t.strftime("%c")
-                row = proofreader.get_selected_row()
-                last_wav = get_table_item("table_proofread", row, 0)
-                log_file.write("\n{}: Saved {} Last item selected: {}".format(tt, "autosave.csv", last_wav))            
-        else:
-            with open("{}/{}".format(proofreader.get_project_path(), name), 'w') as csv_file:
-                table = get_table_data("table_proofread")
-                for row in table:
-                    csv_file.write("{}{}|{}".format(newline, row[0], row[1]))
-                    newline = "\n"
-            set_value("proofread_status", "{}/{} saved".format(proofreader.get_project_path(), name))
-            #logging
-            with open("{}/logfile.txt".format(proofreader.get_project_path()), 'a') as log_file:
-                t = datetime.datetime.now()
-                tt = t.strftime("%c")
-                row = proofreader.get_selected_row()
-                last_wav = get_table_item("table_proofread", row, 0)
-                log_file.write("\n{}: Saved {} Last item selected: {}".format(tt, name, last_wav))
+        # if data == "autosave":
+        #     with open("{}/{}".format(proofreader.get_project_path(), "autosave.csv"), 'w') as csv_file:
+        #         table = get_table_data("table_proofread")
+        #         for row in table:
+        #             csv_file.write("{}{}|{}".format(newline, row[0], row[1]))
+        #             newline = "\n"
+        #     set_value("proofread_status", "{}/{} saved".format(proofreader.get_project_path(), "autosave.csv"))            
+        #     #logging
+        #     with open("{}/logfile.txt".format(proofreader.get_project_path()), 'a') as log_file:
+        #         t = datetime.datetime.now()
+        #         tt = t.strftime("%c")
+        #         row = proofreader.get_selected_row()
+        #         last_wav = get_table_item("table_proofread", row, 0)
+        #         log_file.write("\n{}: Saved {} Last item selected: {}".format(tt, "autosave.csv", last_wav))            
+
+        with open("{}/{}".format(proofreader.get_project_path(), name), 'w') as csv_file:
+            table = get_table_data("table_proofread")
+            for row in table:
+                csv_file.write("{}{}|{}".format(newline, row[0], row[1]))
+                newline = "\n"
+        set_value("proofread_status", "{}/{} saved".format(proofreader.get_project_path(), name))
+        #logging
+        with open("{}/logfile.txt".format(proofreader.get_project_path()), 'a') as log_file:
+            t = datetime.datetime.now()
+            tt = t.strftime("%c")
+            row = proofreader.get_selected_row()
+            last_wav = get_table_item("table_proofread", row, 0)
+            log_file.write("\n{}: Saved {} Last item selected: {}".format(tt, name, last_wav))
         
 
 def open_csv_proofread_call(sender, data):
