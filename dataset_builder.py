@@ -1,7 +1,6 @@
 import datetime
 from pathlib import Path
 import numpy
-import simpleaudio as sa
 import io
 import math
 from pydub import AudioSegment, silence
@@ -57,6 +56,7 @@ class Dataset_builder:
 
         if self.split_method == 0:
             #Google API mode
+            set_value("label_build_status", "Detecting silences. This may take several minutes...")
             audio_name = self.wav_file_path   
             w = AudioSegment.from_wav(audio_name)
 
@@ -153,7 +153,7 @@ class Dataset_builder:
                     print(text)
                     set_value("label_build_status", text)
 
-                    f.write("{}wavs/{}.wav|{}".format(newline, i, text))
+                    f.write("{}wavs/{}.wav|{}".format(newline, i + int(get_value("input_starting_index")), text))
                     newline = '\n'
             print('\a') #system beep 
             set_value("label_build_status", "Done!")
