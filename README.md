@@ -22,6 +22,8 @@ pip install google-cloud-speech
 
 pip install google-cloud-storage
 
+pip install simpleaudio
+
 # Linux Setup
 Linux environment is recommended for Aeneas option, in windows aeneas will not be able to make longer cuts due to memory issues. 
 
@@ -42,6 +44,8 @@ pip install dearpygui
 pip install google-cloud-speech
 
 pip install google-cloud-storage
+
+pip install simpleaudio
 
 If you get libpython error: 
 
