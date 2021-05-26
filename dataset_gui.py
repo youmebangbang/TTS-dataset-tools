@@ -70,17 +70,11 @@ def run_google_speech_call(sender, data):
 
 #Functions / callbacks for Dataset Builder
 def run_dataset_builder_call(sender, data):
-    if get_value("label_wav_file_path") == "" or get_value("label_speaker_text_path") == "":
-        return
     #check to see if txt and wav file was selected
-    set_value("label_build_status", "Running builder...")
-    if get_value("input_project_name") and get_value("label_speaker_text_path") and get_value("label_wav_file_path"):
-        print("running")
-        builder.set_values(get_value("input_project_name"), get_value("label_speaker_text_path")
-        , get_value("label_wav_file_path"), get_value("input_starting_index"), get_value("input_cut_length"), get_value("input_split"))
-        builder.build_dataset()
-    else:
-        print("error: enter inputs")
+    set_value("label_build_status", "Running builder...")    
+    builder.set_values(get_value("input_project_name"), get_value("label_speaker_text_path")
+    , get_value("label_wav_file_path"), get_value("input_starting_index"), get_value("input_cut_length"), get_value("input_split"), get_value("input_contains_punc"))
+    builder.build_dataset()
 
 def add_speaker_txt_file(sender, data):
     #open working speaker text
@@ -595,7 +589,7 @@ set_main_window_title("DeepVoice Dataset Tools 1.0 by YouMeBangBang")
 #set_global_font_scale(1.5)
 
 
-set_theme("Classic")
+set_theme("Dark")
 #set_theme_item(mvGuiCol_WindowBg, 0, 0, 200, 200)
 
 proofreader = Proofreader()

@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy
 import io
 import math
-from pydub import AudioSegment, silence
+from pydub import AudioSegment, silence, effects
 from pydub.utils import mediainfo
 from pydub.playback import play
 from dearpygui.core import *
@@ -38,16 +38,19 @@ class Dataset_builder:
         self.index_start = None
         self.cut_length = None
         self.split_method = None
+        self.contains_punc = None
     
-    def set_values(self, project_name, speaker_text_path, wav_file_path, index_start, cut_length, split_method):    
+    def set_values(self, project_name, speaker_text_path, wav_file_path, index_start, cut_length, split_method, contains_punc):    
         self.project_name = project_name
         self.speaker_text_path = speaker_text_path
         self.wav_file_path = wav_file_path
         self.index_start = index_start
         self.cut_length = float(cut_length)
         self.split_method = split_method
+        self.contains_punc = contains_punc
 
     def build_dataset(self):
+        print("running")
         output_wav_path = "{}/wavs/".format(self.project_name)
 
         if not os.path.exists(self.project_name):
@@ -57,6 +60,10 @@ class Dataset_builder:
             os.mkdir(output_wav_path) 
 
         if self.split_method == 0:
+            if not get_value("input_project_name") or not get_value("label_wav_file_path"):
+                print("Error, please choose text and/or audio files.")
+                return
+
             #Google API mode
             set_value("label_build_status", "Detecting silences. This may take several minutes...")
             audio_name = self.wav_file_path   
@@ -118,8 +125,10 @@ class Dataset_builder:
             
             if not os.path.exists("{}/wavs".format(self.project_name)):
                 os.mkdir("{}/wavs".format(self.project_name))
-
+                     
             for i, w in enumerate(final_cuts):
+                # peak normalize audio
+                w = effects.normalize(w)
                 w.export("{}/wavs/{}.wav".format(self.project_name, i + int(get_value("input_starting_index"))), format="wav")
             
             # Process each cut into google API and add result to csv
@@ -164,6 +173,9 @@ class Dataset_builder:
 
             
         else:
+            if not get_value("input_project_name") or not get_value("label_speaker_text_path") or not get_value("label_wav_file_path"):
+                print("Error, please choose text and/or audio files.")
+                return
             # Aeneas mode
             if not os.path.exists("aeneas_out"):
                 os.mkdir("aeneas_out")
