@@ -125,15 +125,16 @@ class Dataset_builder:
                 bucket_name = get_value("input_storage_bucket")
                 newline = ''
                 for i, c in enumerate(final_cuts):
-                    print(f"Transcribing entry {i}")
-                    self.upload_blob(bucket_name, "{}/wavs/{}.wav".format(self.project_name, i), "temp_audio.wav")
+                    x = i + int(get_value("input_starting_index"))
+                    print(f"Transcribing entry {x}")
+                    self.upload_blob(bucket_name, "{}/wavs/{}.wav".format(self.project_name, i + int(get_value("input_starting_index"))), "temp_audio.wav")
                     gcs_uri = "gs://{}/temp_audio.wav".format(bucket_name)
 
                     client = speech.SpeechClient()
 
                     audio = speech.RecognitionAudio(uri=gcs_uri)
 
-                    info = mediainfo("{}/wavs/{}.wav".format(self.project_name, i))
+                    info = mediainfo("{}/wavs/{}.wav".format(self.project_name, i + int(get_value("input_starting_index"))))
                     sample_rate = info['sample_rate']
                 
                     config = speech.RecognitionConfig(
