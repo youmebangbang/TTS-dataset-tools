@@ -18,6 +18,8 @@ import shutil
 from google.cloud import storage
 #from google.cloud import speech as speech
 from google.cloud import speech_v1p1beta1 as speech
+import simpleaudio as sa
+
 
 def to_millis(timestamp):
     timestamp = str(timestamp)
