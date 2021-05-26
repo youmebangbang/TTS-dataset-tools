@@ -118,7 +118,7 @@ class Dataset_builder:
                 os.mkdir("{}/wavs".format(self.project_name))
 
             for i, w in enumerate(final_cuts):
-                w.export("{}/wavs/{}.wav".format(self.project_name, i), format="wav")
+                w.export("{}/wavs/{}.wav".format(self.project_name, i + int(get_value("input_starting_index"))), format="wav")
             
             # Process each cut into google API and add result to csv
             with open("{}/output.csv".format(self.project_name), 'w') as f:
