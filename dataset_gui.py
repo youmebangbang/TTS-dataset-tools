@@ -2,7 +2,6 @@ import datetime
 from itertools import count
 from pathlib import Path
 import numpy
-import simpleaudio as sa
 import io
 import math
 from pydub import AudioSegment
