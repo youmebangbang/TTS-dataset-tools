@@ -70,37 +70,63 @@ class Dataset_builder:
             w = AudioSegment.from_wav(audio_name)
 
             s_len = 1000
-            def split_wav(w, l):
-                c = silence.split_on_silence(w, min_silence_len=l, silence_thresh=-45, keep_silence=True)
-                return c
 
-            silence_cuts = split_wav(w, s_len)
+            silence_cuts = silence.split_on_silence(w, min_silence_len=s_len, silence_thresh=-45, keep_silence=True)
+
             cuts = []
             final_cuts = []
 
+            def split_wav(wav, l):
+                if (wav.duration_seconds * 1000) < (self.cut_length * 1000):
+                    print("under length")
+                    output = []
+                    output.append(wav)
+                    return output
 
-            # print(silences)
-            # for i, e in enumerate(silences):
-            #     e.export("{}/{}.wav".format(self.project_name, i), format="wav")
-            
-            c_split_len = 1
-            s_len_temp = s_len - 100
+                too_long = False
+                while True:
+                    l -= 50
+                    if l == 0:
+                        print("Error, could not find small enough silence period for split, giving up")
+                        output = []
+                        output.append(wav)
+                        return output
+                    splits = silence.split_on_silence(wav, min_silence_len=l, silence_thresh=-45, keep_silence=True)
+                    print("split count: {}".format(len(splits)))                
+                    for s in splits:
+                        if (s.duration_seconds * 1000) > (self.cut_length * 1000):
+                            too_long = True 
+                    if too_long == True:
+                        too_long = False
+                    else:
+                        return splits
+
+
+            # Keep splitting until all cuts are under max len
 
             for c in silence_cuts:
-                if (c.duration_seconds * 1000) > (self.cut_length * 1000):
-                    # cut again, too long 
-                    #print("cutting again...")
-                    while c_split_len == 1:      
-                        #print(s_len_temp)  
-                        c_split = split_wav(c, s_len_temp)
-                        c_split_len = len(c_split)
-                        s_len_temp -= 100   #reduce split time for hopefully more cuts
-                    c_split_len = 1
-                    s_len_temp = s_len - 100
-                    for i in c_split:
-                        cuts.append(i)                       
-                else:
-                    cuts.append(c)
+                c_splits = split_wav(c, 1000)
+                for s in c_splits:
+                    cuts.append(s)
+
+            # c_split_len = 1
+            # s_len_temp = s_len - 100
+
+            # for c in silence_cuts:
+            #     if (c.duration_seconds * 1000) > (self.cut_length * 1000):
+            #         # cut again, too long 
+            #         #print("cutting again...")
+            #         while c_split_len == 1:      
+            #             #print(s_len_temp)  
+            #             c_split = split_wav(c, s_len_temp)
+            #             c_split_len = len(c_split)
+            #             s_len_temp -= 100   #reduce split time for hopefully more cuts
+            #         c_split_len = 1
+            #         s_len_temp = s_len - 100
+            #         for i in c_split:
+            #             cuts.append(i)                       
+            #     else:
+            #         cuts.append(c)
 
             # rebuild small cuts into larger, but below split len        
             temp_cuts = AudioSegment.empty()
