@@ -20,7 +20,6 @@ from google.cloud import storage
 from google.cloud import speech_v1p1beta1 as speech
 import simpleaudio as sa
 
-
 def to_millis(timestamp):
     timestamp = str(timestamp)
     hours, minutes, seconds = (["0", "0"] + timestamp.split(":"))[-3:]
@@ -59,12 +58,12 @@ class Dataset_builder:
         if not os.path.exists(output_wav_path):
             os.mkdir(output_wav_path) 
 
-        if self.split_method == 0:
+        if self.split_method == 0: 
+            #Google API mode
             if not get_value("input_project_name") or not get_value("label_wav_file_path"):
                 print("Error, please choose text and/or audio files.")
                 return
-
-            #Google API mode
+           
             set_value("label_build_status", "Detecting silences. This may take several minutes...")
             audio_name = self.wav_file_path   
             w = AudioSegment.from_wav(audio_name)
@@ -78,7 +77,6 @@ class Dataset_builder:
 
             def split_wav(wav, l):
                 if (wav.duration_seconds * 1000) < (self.cut_length * 1000):
-                    print("under length")
                     output = []
                     output.append(wav)
                     return output
@@ -92,7 +90,7 @@ class Dataset_builder:
                         output.append(wav)
                         return output
                     splits = silence.split_on_silence(wav, min_silence_len=l, silence_thresh=-45, keep_silence=True)
-                    print("split count: {}".format(len(splits)))                
+                    print("Trying resplit...")                
                     for s in splits:
                         if (s.duration_seconds * 1000) > (self.cut_length * 1000):
                             too_long = True 
@@ -101,10 +99,10 @@ class Dataset_builder:
                     else:
                         return splits
 
-
             # Keep splitting until all cuts are under max len
 
-            for c in silence_cuts:
+            for i, c in enumerate(silence_cuts):
+                print(f"Checking phrase {i}...")
                 c_splits = split_wav(c, 1000)
                 for s in c_splits:
                     cuts.append(s)
@@ -164,24 +162,38 @@ class Dataset_builder:
                 for i, c in enumerate(final_cuts):
                     x = i + int(get_value("input_starting_index"))
                     print(f"Transcribing entry {x}")
-                    self.upload_blob(bucket_name, "{}/wavs/{}.wav".format(self.project_name, i + int(get_value("input_starting_index"))), "temp_audio.wav")
+                    self.upload_blob(bucket_name, "{}/wavs/{}.wav".format(self.project_name, x), "temp_audio.wav")
                     gcs_uri = "gs://{}/temp_audio.wav".format(bucket_name)
 
                     client = speech.SpeechClient()
 
                     audio = speech.RecognitionAudio(uri=gcs_uri)
 
-                    info = mediainfo("{}/wavs/{}.wav".format(self.project_name, i + int(get_value("input_starting_index"))))
+                    info = mediainfo("{}/wavs/{}.wav".format(self.project_name, x))
                     sample_rate = info['sample_rate']
                 
-                    config = speech.RecognitionConfig(
-                        encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-                        sample_rate_hertz=int(sample_rate),
-                        language_code="en-US",
-                        enable_automatic_punctuation=True,
-                        enable_word_time_offsets=False, 
-                        enable_speaker_diarization=False,
-                    )
+                    if get_value("input_use_videomodel") == 1:
+                        print("Using enchanced google model...")
+                        config = speech.RecognitionConfig(
+                            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+                            sample_rate_hertz=int(sample_rate),
+                            language_code="en-US",
+                            enable_automatic_punctuation=True,
+                            enable_word_time_offsets=False, 
+                            enable_speaker_diarization=False,
+                            # enhanced model for better performance?
+                            use_enhanced=True,
+                            model="video", #"phone_call or video"
+                        )
+                    else:
+                        config = speech.RecognitionConfig(
+                            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+                            sample_rate_hertz=int(sample_rate),
+                            language_code="en-US",
+                            enable_automatic_punctuation=True,
+                            enable_word_time_offsets=False, 
+                            enable_speaker_diarization=False,
+                        )
 
                     operation = client.long_running_recognize(config=config, audio=audio)
                     response = operation.result(timeout=28800)    
@@ -191,18 +203,18 @@ class Dataset_builder:
                     print(text)
                     set_value("label_build_status", text)
 
-                    f.write("{}wavs/{}.wav|{}".format(newline, i + int(get_value("input_starting_index")), text))
+                    f.write("{}wavs/{}.wav|{}".format(newline, x, text))
                     newline = '\n'
             print('\a') #system beep 
             set_value("label_build_status", "Done!")
             print("Done running builder!")
-
             
         else:
+            # Aeneas mode
             if not get_value("input_project_name") or not get_value("label_speaker_text_path") or not get_value("label_wav_file_path"):
                 print("Error, please choose text and/or audio files.")
                 return
-            # Aeneas mode
+            
             if not os.path.exists("aeneas_out"):
                 os.mkdir("aeneas_out")
             else:
@@ -233,7 +245,6 @@ class Dataset_builder:
                 if self.contains_punc:
                     #remove any duplicate whitespace between words
                     text = " ".join(text.split())
-
                     phrase_splits = re.split(r'(?<=[\.\!\?])\s*', text)   #split on white space between sentences             
                     phrase_splits = list(filter(None, phrase_splits))  #remove empty splits
                 else:                
@@ -359,17 +370,14 @@ class Dataset_builder:
                 print('\a') #system beep 
                 print("Done with Aeneas!")
 
-
     def upload_blob(self, bucket_name, source_file_name, destination_blob_name):
 
         #storage_client = storage.Client.from_service_account_json(json_credentials_path='C:\TTS-corpus-builder\My First Project-b660c6889e30.json')
         storage_client = storage.Client()
-
         bucket = storage_client.bucket(bucket_name)
         blob = bucket.blob(destination_blob_name)
         blob.upload_from_filename(source_file_name)
         #print("File {} uploaded to {}.".format(source_file_name, destination_blob_name))
-
 
     def diarization(self, wavfile, bucket_name, project_name):
         if not os.path.exists(project_name):
@@ -381,9 +389,7 @@ class Dataset_builder:
         set_value("label_wav_file_transcribe", "Finished uploading.")    
 
         client = speech.SpeechClient()
-
         audio = speech.RecognitionAudio(uri=gcs_uri)
-
         info = mediainfo(wavfile)
         sample_rate = info['sample_rate']
         print("Transcribing {} with audio rate {}".format(wavfile, sample_rate))  
@@ -403,13 +409,10 @@ class Dataset_builder:
         set_value("label_wav_file_transcribe", "Waiting for operation to complete, this may take several minutes...")    
         response = operation.result(timeout=28800)    
 
-        result_array = []
-
         result = response.results[-1]
         words = result.alternatives[0].words     
 
         active_speaker = 1
-        text = []
         transcript = []
         current_cut = 0
         previous_cut = 0
