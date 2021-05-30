@@ -1,7 +1,7 @@
 # TTS-dataset-tools
 Transcribe audio via Google Speech to Text API with speaker separation (diarization). Automatically generate TTS datasets using audio and associated text. Uses Google API to transcribe cuts that have been split by the maximum silence break (recommended). Or use aeneas to force align text to audio. Quickly proofread and edit cuts.
 
-For Google Speech to Text API you will need a Google Cloud Platform account. Your $GOOGLE_APPLICATION_CREDENTIALS env variable must point to your credentials JSON file path. Google is offering 300min and 3 months free service on new accounts.
+For Google Speech to Text API you will need a Google Cloud Platform account. Your $GOOGLE_APPLICATION_CREDENTIALS env variable must point to your credentials JSON file path. Google is offering $300 worth of service and 3 months free on new accounts.
 
 Run dataset_gui.py for GUI tools. 
 
