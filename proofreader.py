@@ -29,6 +29,13 @@ class Proofreader:
         self.selected_row = 0
         self.num_items = 0
         self.activated = False
+        self.fname = None
+
+    def set_filename(self, fname):
+        self.fname = fname
+
+    def get_filename(self):
+        return self.fname
 
     def set_activated(self, value):
         self.activated = value

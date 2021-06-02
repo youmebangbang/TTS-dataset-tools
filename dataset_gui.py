@@ -24,6 +24,7 @@ from time import sleep
 from proofreader import *
 from dataset_builder import *
 import simpleaudio as sa
+import sox
 
 
 class RepeatedTimer(object):
@@ -95,7 +96,8 @@ def open_wav_file_call(sender, data):
 def save_csv_proofread_call(sender, data):
     if proofreader.get_current() == None:
         return 
-    name = get_value("proofread_project_name")
+    name = proofreader.get_filename()
+    #name = get_value("proofread_project_name")
     if name:
         newline = ""
         # if data == "autosave":
@@ -133,8 +135,9 @@ def open_csv_proofread_call(sender, data):
 
 def add_csv_file_proofread_call(sender, data):
     proofreader.set_activated(True)
-    path = "{}/{}".format(data[0], data[1])    
-    set_value("proofread_project_name", data[1])
+    path = "{}/{}".format(data[0], data[1])   
+    proofreader.set_filename(data[1]) 
+    #set_value("proofread_project_name", data[1])
     #clear table
     clear_table("table_proofread")
     #populate table with entries
@@ -531,6 +534,45 @@ def mouse_wheel_proofread_call(sender, data):
         if data < 0:
             proofreader.scroll_down()
 
+
+# callbacks for Other Tools
+def tools_open_project_call(sender, data):
+    select_directory_dialog(add_tools_project_call)
+
+def add_tools_project_call(sender, data):
+    pname = data[0] + '\\' + data[1]
+    set_value("tools_project_name", pname)
+
+def tools_normalize_call(sender, data):
+    pname = get_value("tools_project_name")
+    # creat sox transformer
+    tfm = sox.Transformer()
+    tfm.norm(-1)
+    #tfm.build_file('path/to/input_audio.wav', 'path/to/output/audio.aiff')
+
+    os.mkdir(pname + '\\normalized')
+    os.mkdir(pname + '\\normalized\\wavs')
+
+    with open(pname + "\\output.csv", 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            wav_path, text = line.split('|')
+            text = text.strip()
+            tfm.build_file(pname + '\\' + wav_path, pname + '\\normalized\\' + wav_path)
+        print("Done normalizing wavs")
+
+def tools_open_project_combine_call(sender, data):
+    select_directory_dialog(add_tools_project_combine_call)
+
+def add_tools_project_combine_call(sender, data):
+    # add project to table list
+    print(data[1])
+
+def tools_table_combine_call(sender, data):
+    pass
+
+
+# Main functions
 themes = ["Dark", "Light", "Classic", "Dark 2", "Grey", "Dark Grey", "Cherry", "Purple", "Gold", "Red"]
 def apply_theme_call(sender, data):
     theme = get_value("Themes")
@@ -658,11 +700,11 @@ with window("mainWin"):
             add_same_line(spacing=10)          
             add_checkbox("input_use_videomodel", default_value=1, label="")   
             add_spacing(count=5)
-            add_text("Does the text have proper punctuation? ")
+            add_text("If using Aeneas, does the text have proper punctuation? ")
             add_same_line(spacing=10)          
             add_checkbox("input_contains_punc", default_value=1, label="")                         
             add_spacing(count=5)            
-            add_text("Select speaker text file: ")
+            add_text("Select speaker text file (Aeneas only): ")
             add_same_line(spacing=10)
             add_button("open_speaker_text", callback=open_speaker_txt_file_call, label="Open txt file") 
             add_same_line(spacing=10)
@@ -691,8 +733,8 @@ with window("mainWin"):
             add_button("open_csv_proofread", callback=open_csv_proofread_call, label="Open csv file")   
             add_same_line(spacing=50)     
             add_button("save_csv_proofread", callback=save_csv_proofread_call, label="Save csv file:")                    
-            add_same_line(spacing=10)     
-            add_input_text("proofread_project_name", width=250, default_value="", label="" ) 
+            # add_same_line(spacing=10)     
+            # add_input_text("proofread_project_name", width=250, default_value="", label="" ) 
             add_same_line(spacing=10) 
             add_label_text("proofread_status", label="")
      
@@ -751,5 +793,25 @@ with window("mainWin"):
         with tab("tab4", label="Other Tools"):
             add_spacing(count=5)  
             add_combo("Themes", items=themes, width=100, default_value="Dark", callback=apply_theme_call)
+            add_spacing(count=5)
+            add_text("Choose project directory to edit:")
+            add_spacing(count=3)
+            add_button("tools_open_project", callback=tools_open_project_call, label="Open project")  
+            add_same_line(spacing=10)
+            add_text("Current project: ")
+            add_same_line(spacing=5)
+            add_label_text("tools_project_name", label="")
+            add_spacing(count=3)
+            add_button("tools_normalize", callback=tools_normalize_call, label="Normalize wavs")
+            add_spacing(count=3)
+            add_drawing("hline3", width=800, height=1)
+            draw_line("hline3", [0, 0], [800, 0], [255, 0, 0, 255], 1)  
+            add_spacing(count=3)
+            add_text("Combine project folders into one project:")
+            add_same_line(spacing=10)
+            add_button("tools_open_project_combine", callback=tools_open_project_combine_call, label="Add project")
+            add_spacing(count=3)
+            add_table("tools_table_combine", ["Projects to combine"], callback=tools_table_combine_call, height=100, width=200)
+
 
 start_dearpygui(primary_window="mainWin")
