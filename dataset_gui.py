@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy
 import io
 import math
-from pydub import AudioSegment
+from pydub import AudioSegment, effects
 from pydub.utils import mediainfo
 from pydub.playback import play
 from dearpygui.core import *
@@ -543,23 +543,42 @@ def add_tools_project_call(sender, data):
     pname = data[0] + '\\' + data[1]
     set_value("tools_project_name", pname)
 
-def tools_normalize_call(sender, data):
+def tools_process_wavs_call(sender, data):
     pname = get_value("tools_project_name")
+    if not pname:
+        return
     # creat sox transformer
     tfm = sox.Transformer()
-    tfm.norm(-1)
-    #tfm.build_file('path/to/input_audio.wav', 'path/to/output/audio.aiff')
+    if get_value("tools_trimadd"):
+        print("Trimming and padding with silence")
+        set_value("tools_status", "Trimming and padding with silence")        
+        tfm.silence(1, .15, .1)
+        tfm.silence(-1, .15, .1)
+        tfm.pad(.25, .5)
+    if get_value("tools_resample"):
+        print("Resampling")
+        set_value("tools_status", "Resampling")
+        tfm.rate(22050) 
 
-    os.mkdir(pname + '\\normalized')
-    os.mkdir(pname + '\\normalized\\wavs')
-
-    with open(pname + "\\output.csv", 'r') as f:
+    os.mkdir(pname + '\\processed')
+    os.mkdir(pname + '\\processed\\wavs')
+    with open(pname + "\\output.csv", 'r') as f:      
         lines = f.readlines()
         for line in lines:
-            wav_path, text = line.split('|')
+            wav_path, text = line.split('|') 
+            processedpath = pname + '\\processed\\' + wav_path
             text = text.strip()
-            tfm.build_file(pname + '\\' + wav_path, pname + '\\normalized\\' + wav_path)
-        print("Done normalizing wavs")
+            tfm.build_file(pname + '\\' + wav_path, processedpath)
+            print(f"Processing {wav_path}")
+            if get_value("tools_compress"):                        
+                w = AudioSegment.from_wav(processedpath)
+                w = effects.compress_dynamic_range(w, threshold=-10)
+                w.export(processedpath, format='wav')
+
+        print("Done processing wavs!")
+        set_value("tools_status", "Processing wavs done!")
+        print('\a') #system beep 
+
 
 def tools_open_project_combine_call(sender, data):
     select_directory_dialog(add_tools_project_combine_call)
@@ -577,6 +596,12 @@ themes = ["Dark", "Light", "Classic", "Dark 2", "Grey", "Dark Grey", "Cherry", "
 def apply_theme_call(sender, data):
     theme = get_value("Themes")
     set_theme(theme)       
+
+def apply_font_scale_call(sender, data):
+    scale = .01 * float(get_value("Font Scale"))
+    set_global_font_scale(scale)
+
+
 
 def render_call(sender, data):
     if is_key_pressed(mvKey_Control) and is_key_pressed(mvKey_S):
@@ -736,13 +761,10 @@ with window("mainWin"):
             # add_same_line(spacing=10)     
             # add_input_text("proofread_project_name", width=250, default_value="", label="" ) 
             add_same_line(spacing=10) 
-            add_label_text("proofread_status", label="")
-     
+            add_label_text("proofread_status", label="")     
             add_spacing(count=3)
-
             add_table("table_proofread", ["Wav path", "Text"], callback=table_row_selected_call, height=200)
             add_spacing(count=2)
-
             with group("group5"):
                 add_input_text("current_input_text", width=1200, default_value="", label="" )
                 add_plot("current_plot", label="Current Wav", width=1200, height=200, xaxis_no_tick_labels=True,  
@@ -794,6 +816,8 @@ with window("mainWin"):
             add_spacing(count=5)  
             add_combo("Themes", items=themes, width=100, default_value="Dark", callback=apply_theme_call)
             add_spacing(count=5)
+            add_slider_int("Font Scale", default_value=100, min_value=50, max_value=300, width=200, callback=apply_font_scale_call)
+            add_spacing(count=5)
             add_text("Choose project directory to edit:")
             add_spacing(count=3)
             add_button("tools_open_project", callback=tools_open_project_call, label="Open project")  
@@ -802,7 +826,13 @@ with window("mainWin"):
             add_same_line(spacing=5)
             add_label_text("tools_project_name", label="")
             add_spacing(count=3)
-            add_button("tools_normalize", callback=tools_normalize_call, label="Normalize wavs")
+            add_text("Wav Operations:")
+            add_spacing(count=3)
+            add_checkbox("tools_compress", default_value=1, label="Add compression with -10dB threshold?") 
+            add_checkbox("tools_resample", default_value=1, label="Resample to 22050 rate?") 
+            add_checkbox("tools_trimadd", default_value=1, label="Trim audio and pad with silences?") 
+            add_spacing(count=3)
+            add_button("tools_process_wavs", callback=tools_process_wavs_call, label="Process wavs")  
             add_spacing(count=3)
             add_drawing("hline3", width=800, height=1)
             draw_line("hline3", [0, 0], [800, 0], [255, 0, 0, 255], 1)  
@@ -812,6 +842,7 @@ with window("mainWin"):
             add_button("tools_open_project_combine", callback=tools_open_project_combine_call, label="Add project")
             add_spacing(count=3)
             add_table("tools_table_combine", ["Projects to combine"], callback=tools_table_combine_call, height=100, width=200)
-
+            add_spacing(count=3)
+            add_label_text("tools_status", label="")
 
 start_dearpygui(primary_window="mainWin")
