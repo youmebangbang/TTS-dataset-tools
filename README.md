@@ -24,6 +24,8 @@ pip install google-cloud-storage
 
 pip install simpleaudio
 
+pip install sox
+
 # Linux Setup
 Linux environment is recommended for Aeneas option, in windows aeneas will not be able to make longer cuts due to memory issues. 
 
@@ -46,6 +48,8 @@ pip install google-cloud-speech
 pip install google-cloud-storage
 
 pip install simpleaudio
+
+pip install sox
 
 If you get libpython error: 
 
