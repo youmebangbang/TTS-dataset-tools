@@ -618,8 +618,8 @@ def table_row_selected_call(sender, data):
         set_value("next_input_text", get_table_item("table_proofread", row+1, 1))
         proofreader.set_selected_row(row)
         
-    configure_item("current_plot", label=current_path)
-    configure_item("next_plot", label=next_path)
+    # configure_item("current_plot", label=current_path)
+    # configure_item("next_plot", label=next_path)
     #set_value("wav_current_label", current_path)
     #set_value("wav_next_label", next_path)
     proofreader.set_current(current_wav)
