@@ -168,10 +168,10 @@ def add_csv_file_proofread_call(sender, data):
     proofreader.set_rate(sample_rate)
     set_value("current_input_text", get_table_item("table_proofread", 0, 1))   
     set_value("next_input_text", get_table_item("table_proofread", 1, 1))
-    # configure_item("current_plot", label=current_path)
-    # configure_item("next_plot", label=next_path)
+    add_data("current_path", current_path)
+    add_data("next_path", next_path)
 
-    set_value("current_plot_label", current_path)
+    # set_value("current_plot_label", current_path)
 
 
     # set_value("wav_current_label", current_path)
@@ -545,8 +545,8 @@ def current_remove_call(sender, data):
         set_value("current_input_text", get_table_item("table_proofread", row, 1))
         set_value("next_input_text", get_table_item("table_proofread", row + 1, 1))
 
-    configure_item("current_plot", label=current_path)
-    configure_item("next_plot", label=next_path)
+    add_data("current_path", current_path)
+    add_data("next_path", next_path)
     #set_value("wav_current_label", current_path)
     #set_value("wav_next_label", next_path)
     proofreader.set_current(current_wav)
@@ -582,8 +582,8 @@ def next_remove_call(sender, data):
         set_value("current_input_text", get_table_item("table_proofread", row, 1))
         set_value("next_input_text", get_table_item("table_proofread", row + 1, 1))
 
-    configure_item("current_plot", label=current_path)
-    configure_item("next_plot", label=next_path)
+    add_data("current_path", current_path)
+    add_data("next_path", next_path)
     #set_value("wav_current_label", current_path)
     #set_value("wav_next_label", next_path)
     proofreader.set_current(current_wav)
@@ -618,8 +618,8 @@ def table_row_selected_call(sender, data):
         set_value("next_input_text", get_table_item("table_proofread", row+1, 1))
         proofreader.set_selected_row(row)
         
-    # configure_item("current_plot", label=current_path)
-    # configure_item("next_plot", label=next_path)
+    add_data("current_path", current_path)
+    add_data("next_path", next_path)
     #set_value("wav_current_label", current_path)
     #set_value("wav_next_label", next_path)
     proofreader.set_current(current_wav)
@@ -699,7 +699,7 @@ def mouse_move_proofread_call(sender, data):
                 dout = proofreader.get_drag_out_next()
 
                 proofreader.set_selection_range_next(din,dout)
-                proofreader.set_selection_range_next(None, None)
+                proofreader.set_selection_range_current(None, None)
                 proofreader.set_drag_in_next(None)
             proofreader.draw_selector("next_plot_drawing_new", mouse_pos[0])
 

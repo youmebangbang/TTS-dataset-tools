@@ -96,8 +96,8 @@ class Proofreader:
 
         set_value("current_input_text", get_table_item("table_proofread", row, 1))
         set_value("next_input_text", get_table_item("table_proofread", row+1, 1))
-        # configure_item("current_plot", label=current_path)
-        # configure_item("next_plot", label=next_path)
+        add_data("current_path", current_path)
+        add_data("next_path", next_path)
 
         # set_value("current_plot_label", current_path)
 
@@ -127,8 +127,8 @@ class Proofreader:
 
         set_value("current_input_text", get_table_item("table_proofread", row, 1))
         set_value("next_input_text", get_table_item("table_proofread", row+1, 1))
-        # configure_item("current_plot", label=current_path)
-        # configure_item("next_plot", label=next_path)
+        add_data("current_path", current_path)
+        add_data("next_path", next_path)
 
         # set_value("current_plot_label", current_path)
 
@@ -242,11 +242,13 @@ class Proofreader:
         # add_line_series("current_plot", "", current_x_axis, current_float32, weight=2)
         # add_line_series("next_plot", "", next_x_axis, next_float32, weight=2)
 
-        #test drawing 
         clear_drawing("current_plot_drawing_new")
         draw_polyline("current_plot_drawing_new", current_polyline, [255,255,0,255], thickness=3)
+        draw_text("current_plot_drawing_new", [10, 175], get_data("current_path"), size=20)
         clear_drawing("next_plot_drawing_new")
         draw_polyline("next_plot_drawing_new", next_polyline, [255,255,0,255], thickness=3)
+        draw_text("next_plot_drawing_new", [10, 175], get_data("next_path"), size=20)
+
 
     def current_plot_drawing_set_point(self, point):
         self.current_point = point
