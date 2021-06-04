@@ -166,10 +166,14 @@ def add_csv_file_proofread_call(sender, data):
     wav_info = mediainfo("{}/{}".format(data[0], current_path))
     sample_rate = wav_info['sample_rate']
     proofreader.set_rate(sample_rate)
-    set_value("current_input_text", get_table_item("table_proofread", 0, 1))
+    set_value("current_input_text", get_table_item("table_proofread", 0, 1))   
     set_value("next_input_text", get_table_item("table_proofread", 1, 1))
-    configure_item("current_plot", label=current_path)
-    configure_item("next_plot", label=next_path)
+    # configure_item("current_plot", label=current_path)
+    # configure_item("next_plot", label=next_path)
+
+    set_value("current_plot_label", current_path)
+
+
     # set_value("wav_current_label", current_path)
     # set_value("wav_next_label", next_path)
     proofreader.set_project_path(data[0])
@@ -180,53 +184,53 @@ def add_csv_file_proofread_call(sender, data):
     #set autosave timer on
     rt.start()
 
-def current_delete_beginningcut_call(sender, data):
-    w_current = proofreader.get_current()
-    if proofreader.get_current() == None:
-        return 
-    num_samples = len(w_current.get_array_of_samples())
-    point = proofreader.get_current_point()
-    if point:
-        point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000        
-        w_current = w_current[point:]
-        proofreader.set_current(w_current)
-        proofreader.plot_wavs()
+# def current_delete_beginningcut_call(sender, data):
+#     w_current = proofreader.get_current()
+#     if proofreader.get_current() == None:
+#         return 
+#     num_samples = len(w_current.get_array_of_samples())
+#     point = proofreader.get_current_point()
+#     if point:
+#         point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000        
+#         w_current = w_current[point:]
+#         proofreader.set_current(w_current)
+#         proofreader.plot_wavs()
 
-def current_delete_endcut_call(sender, data):    
-    w_current = proofreader.get_current()
-    if proofreader.get_current() == None:
-        return 
-    num_samples = len(w_current.get_array_of_samples())
-    point = proofreader.get_current_point()
-    if point:
-        point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000        
-        w_current = w_current[:point]
-        proofreader.set_current(w_current)
-        proofreader.plot_wavs()
+# def current_delete_endcut_call(sender, data):    
+#     w_current = proofreader.get_current()
+#     if proofreader.get_current() == None:
+#         return 
+#     num_samples = len(w_current.get_array_of_samples())
+#     point = proofreader.get_current_point()
+#     if point:
+#         point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000        
+#         w_current = w_current[:point]
+#         proofreader.set_current(w_current)
+#         proofreader.plot_wavs()
 
-def next_delete_beginningcut_call(sender, data):
-    w_next = proofreader.get_next()
-    if proofreader.get_next() == None:
-        return 
-    num_samples = len(w_next.get_array_of_samples())
-    point = proofreader.get_next_point()
-    if point:
-        point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000        
-        w_next = w_next[point:]
-        proofreader.set_next(w_next)
-        proofreader.plot_wavs()
+# def next_delete_beginningcut_call(sender, data):
+#     w_next = proofreader.get_next()
+#     if proofreader.get_next() == None:
+#         return 
+#     num_samples = len(w_next.get_array_of_samples())
+#     point = proofreader.get_next_point()
+#     if point:
+#         point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000        
+#         w_next = w_next[point:]
+#         proofreader.set_next(w_next)
+#         proofreader.plot_wavs()
 
-def next_delete_endcut_call(sender, data):
-    w_next = proofreader.get_next()
-    if proofreader.get_next() == None:
-        return 
-    num_samples = len(w_next.get_array_of_samples())
-    point = proofreader.get_next_point()
-    if point:
-        point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000        
-        w_next = w_next[:point]
-        proofreader.set_next(w_next)
-        proofreader.plot_wavs()
+# def next_delete_endcut_call(sender, data):
+#     w_next = proofreader.get_next()
+#     if proofreader.get_next() == None:
+#         return 
+#     num_samples = len(w_next.get_array_of_samples())
+#     point = proofreader.get_next_point()
+#     if point:
+#         point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000        
+#         w_next = w_next[:point]
+#         proofreader.set_next(w_next)
+#         proofreader.plot_wavs()
 
 def save_current_text_call(sender, data):
     if proofreader.get_current() == None:
@@ -266,119 +270,225 @@ def save_all_call(sender, data):
     current_save_call("","")
     next_save_call("","")
 
-def current_play_from_selection_call(sender, data):
+def play_selection_call(sender, data):  
     proofreader.stop()
-    w_current = proofreader.get_current()
-    if w_current == None:
-        return
-    num_samples = len(w_current.get_array_of_samples())
-    point = proofreader.get_current_point()
+    c = proofreader.get_selection_range_current()
+    n = proofreader.get_selection_range_next()
+    if c[0]:
+        w_current = proofreader.get_current()
+        if w_current == None:
+            return
+        num_samples = len(w_current.get_array_of_samples())
+        drag_in, drag_out = proofreader.get_selection_range_current()
+        points = [drag_in, drag_out]
+        in_point = min(points)
+        out_point = max(points)
+        if in_point and out_point:
+            in_point = (in_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
+            out_point = (out_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
+            wav = w_current[in_point:out_point]
+            proofreader.play(wav)  
 
-    if point:
-        point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000
-        wav = w_current[point:]
-        proofreader.play(wav)        
-        # #play(w_cut)
-        # sa.play_buffer(
-        #     wav.raw_data,
-        #     num_channels=wav.channels,
-        #     bytes_per_sample=wav.sample_width,
-        #     sample_rate=wav.frame_rate
-        # )
+    elif n[0]:
+        w_next = proofreader.get_next()
+        if w_next == None:
+            return
+        num_samples = len(w_next.get_array_of_samples())
+        drag_in, drag_out = proofreader.get_selection_range_next()
+        points = [drag_in, drag_out]
+        in_point = min(points)
+        out_point = max(points)
+        if in_point and out_point:
+            in_point = (in_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
+            out_point = (out_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
+            wav = w_next[in_point:out_point]
+            proofreader.play(wav)     
 
-def current_play_to_selection_call(sender, data):
-    proofreader.stop()
-    w_current = proofreader.get_current()
-    if w_current == None:
-        return
-    num_samples = len(w_current.get_array_of_samples())
-    point = proofreader.get_current_point()
+def cut_selection_call(sender, data):
+    c = proofreader.get_selection_range_current()
+    n = proofreader.get_selection_range_next()
 
-    if point:
-        point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000
-        wav = w_current[:point]
-        proofreader.play(wav)        
-        # #play(w_cut)
-        # sa.play_buffer(
-        #     wav.raw_data,
-        #     num_channels=wav.channels,
-        #     bytes_per_sample=wav.sample_width,
-        #     sample_rate=wav.frame_rate
-        # )
+    if c[0]:
+        w_current = proofreader.get_current()
+        if w_current == None:
+            return
+        num_samples = len(w_current.get_array_of_samples())
+        drag_in, drag_out = proofreader.get_selection_range_current()
+        points = [drag_in, drag_out]
+        in_point = min(points)
+        out_point = max(points)
 
-def next_play_to_selection_call(sender, data):
-    proofreader.stop()
-    w_next = proofreader.get_next()
-    if w_next == None:
-        return
-    num_samples = len(w_next.get_array_of_samples())
-    point = proofreader.get_next_point()
+        if in_point and out_point:
 
-    if point:
-        point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000
-        wav = w_next[:point]
-        proofreader.play(wav)
-        # #play(w_cut)
-        # sa.play_buffer(
-        #     wav.raw_data,
-        #     num_channels=wav.channels,
-        #     bytes_per_sample=wav.sample_width,
-        #     sample_rate=wav.frame_rate
-        # )
+            in_point = (in_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
+            out_point = (out_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
 
-def next_play_from_selection_call(sender, data):
-    proofreader.stop()
-    w_next = proofreader.get_next()
-    if w_next == None:
-        return
-    num_samples = len(w_next.get_array_of_samples())
-    point = proofreader.get_next_point()
+            wav_cut = w_current[in_point:out_point]
+            proofreader.set_current_cut(wav_cut)
+            w_current = w_current[:in_point] + w_current[out_point:]
 
-    if point:
-        point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000
-        wav = w_next[point:]
-        proofreader.play(wav)        
-        # #play(w_cut)
-        # sa.play_buffer(
-        #     wav.raw_data,
-        #     num_channels=wav.channels,
-        #     bytes_per_sample=wav.sample_width,
-        #     sample_rate=wav.frame_rate
-        # )
+            proofreader.set_current(w_current)
+            proofreader.plot_wavs()
+    elif n[0]:
+        w_next = proofreader.get_next()
+        if w_next == None:
+            return
+        num_samples = len(w_next.get_array_of_samples())
+        drag_in, drag_out = proofreader.get_selection_range_next()
+        points = [drag_in, drag_out]
+        in_point = min(points)
+        out_point = max(points)
 
-def current_send_call(sender, data):
-    w_current = proofreader.get_current()
-    w_next = proofreader.get_next()
-    if proofreader.get_current() == None:
-        return 
+        if in_point and out_point:
+            in_point = (in_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
+            out_point = (out_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
 
-    num_samples = len(w_current.get_array_of_samples())
-    point = proofreader.get_current_point()
-    if point:
-        point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000        
-        w_cut = w_current[point:]
-        w_current = w_current[:point]
-        w_next = w_cut + w_next
+            wav_cut = w_next[in_point:out_point]
+            proofreader.set_next_cut(wav_cut)
+            w_next = w_next[:in_point] + w_next[out_point:]
+
+            proofreader.set_next(w_next)
+            proofreader.plot_wavs()        
+
+def paste_selection_call(sender, data):
+    c = proofreader.get_current_p()
+    n = proofreader.get_next_p()
+    if c:
+        cut = proofreader.get_current_cut()
+        w_current = proofreader.get_current()
+        if w_current == None:
+            return
+        num_samples = len(w_current.get_array_of_samples())
+        in_point = (c / 1200) * (num_samples / proofreader.get_rate()) * 1000
+        w_current = w_current[:in_point] + cut + w_current[in_point:]
         proofreader.set_current(w_current)
-        proofreader.set_next(w_next)
-        proofreader.plot_wavs()
+        proofreader.plot_wavs()       
 
-def next_send_call(sender, data):
-    w_current = proofreader.get_current()
-    w_next = proofreader.get_next()
-    if proofreader.get_next() == None:
-        return 
-
-    num_samples = len(w_next.get_array_of_samples())
-    point = proofreader.get_next_point()
-    if point:
-        point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000        
-        w_cut = w_next[:point]
-        w_next = w_next[point:]
-        w_current = w_current + w_cut
-        proofreader.set_current(w_current)
+    elif n:
+        cut = proofreader.get_next_cut()
+        w_next = proofreader.get_next()
+        if w_next == None:
+            return
+        num_samples = len(w_next.get_array_of_samples())
+        in_point = (n / 1200) * (num_samples / proofreader.get_rate()) * 1000
+        w_next = w_next[:in_point] + cut + w_next[in_point:]
         proofreader.set_next(w_next)
-        proofreader.plot_wavs()         
+        proofreader.plot_wavs()            
+
+
+# def current_play_from_selection_call(sender, data):
+#     proofreader.stop()
+#     w_current = proofreader.get_current()
+#     if w_current == None:
+#         return
+#     num_samples = len(w_current.get_array_of_samples())
+#     point = proofreader.get_current_point()
+
+#     if point:
+#         point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000
+#         wav = w_current[point:]
+#         proofreader.play(wav)        
+#         # #play(w_cut)
+#         # sa.play_buffer(
+#         #     wav.raw_data,
+#         #     num_channels=wav.channels,
+#         #     bytes_per_sample=wav.sample_width,
+#         #     sample_rate=wav.frame_rate
+#         # )
+
+# def current_play_to_selection_call(sender, data):
+#     proofreader.stop()
+#     w_current = proofreader.get_current()
+#     if w_current == None:
+#         return
+#     num_samples = len(w_current.get_array_of_samples())
+#     point = proofreader.get_current_point()
+
+#     if point:
+#         point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000
+#         wav = w_current[:point]
+#         proofreader.play(wav)        
+#         # #play(w_cut)
+#         # sa.play_buffer(
+#         #     wav.raw_data,
+#         #     num_channels=wav.channels,
+#         #     bytes_per_sample=wav.sample_width,
+#         #     sample_rate=wav.frame_rate
+#         # )
+
+# def next_play_to_selection_call(sender, data):
+#     proofreader.stop()
+#     w_next = proofreader.get_next()
+#     if w_next == None:
+#         return
+#     num_samples = len(w_next.get_array_of_samples())
+#     point = proofreader.get_next_point()
+
+#     if point:
+#         point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000
+#         wav = w_next[:point]
+#         proofreader.play(wav)
+#         # #play(w_cut)
+#         # sa.play_buffer(
+#         #     wav.raw_data,
+#         #     num_channels=wav.channels,
+#         #     bytes_per_sample=wav.sample_width,
+#         #     sample_rate=wav.frame_rate
+#         # )
+
+# def next_play_from_selection_call(sender, data):
+#     proofreader.stop()
+#     w_next = proofreader.get_next()
+#     if w_next == None:
+#         return
+#     num_samples = len(w_next.get_array_of_samples())
+#     point = proofreader.get_next_point()
+
+#     if point:
+#         point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000
+#         wav = w_next[point:]
+#         proofreader.play(wav)        
+#         # #play(w_cut)
+#         # sa.play_buffer(
+#         #     wav.raw_data,
+#         #     num_channels=wav.channels,
+#         #     bytes_per_sample=wav.sample_width,
+#         #     sample_rate=wav.frame_rate
+#         # )
+
+# def current_send_call(sender, data):
+#     w_current = proofreader.get_current()
+#     w_next = proofreader.get_next()
+#     if proofreader.get_current() == None:
+#         return 
+
+#     num_samples = len(w_current.get_array_of_samples())
+#     point = proofreader.get_current_point()
+#     if point:
+#         point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000        
+#         w_cut = w_current[point:]
+#         w_current = w_current[:point]
+#         w_next = w_cut + w_next
+#         proofreader.set_current(w_current)
+#         proofreader.set_next(w_next)
+#         proofreader.plot_wavs()
+
+# def next_send_call(sender, data):
+#     w_current = proofreader.get_current()
+#     w_next = proofreader.get_next()
+#     if proofreader.get_next() == None:
+#         return 
+
+#     num_samples = len(w_next.get_array_of_samples())
+#     point = proofreader.get_next_point()
+#     if point:
+#         point = (point / 1200) * (num_samples / proofreader.get_rate()) * 1000        
+#         w_cut = w_next[:point]
+#         w_next = w_next[point:]
+#         w_current = w_current + w_cut
+#         proofreader.set_current(w_current)
+#         proofreader.set_next(w_next)
+#         proofreader.plot_wavs()         
 
 def current_play_call(sender, data):
     proofreader.stop()
@@ -517,6 +627,9 @@ def table_row_selected_call(sender, data):
     #set_item_style_var("current_plot", mvGuiStyleVar_Name, "")
     proofreader.plot_wavs()
 
+
+# Mouse Callbacks    
+
 def mouse_clicked_proofread_call(sender, data):
     mouse_pos = get_mouse_pos(local=False)
     point = mouse_pos[0]
@@ -526,6 +639,17 @@ def mouse_clicked_proofread_call(sender, data):
         proofreader.current_plot_drawing_set_point(point)
     if is_item_clicked("next_plot"):
         proofreader.next_plot_drawing_set_point(point)
+    
+    mouse_pos = get_drawing_mouse_pos()       
+    if is_item_hovered("current_plot_drawing_new"):
+        proofreader.set_current_p(mouse_pos[0])
+        proofreader.set_next_p(None)
+        proofreader.draw_p_selection("current_plot_drawing_new", mouse_pos[0])
+    elif is_item_hovered("next_plot_drawing_new"):
+        proofreader.set_next_p(mouse_pos[0])
+        proofreader.set_current_p(None)
+        proofreader.draw_p_selection("next_plot_drawing_new", mouse_pos[0])
+
 
 def mouse_wheel_proofread_call(sender, data):
     if not is_item_hovered("table_proofread") and proofreader.is_activated():
@@ -534,6 +658,54 @@ def mouse_wheel_proofread_call(sender, data):
         if data < 0:
             proofreader.scroll_down()
 
+def mouse_move_proofread_call(sender, data):
+    mouse_pos = get_drawing_mouse_pos()   
+    if is_item_hovered("current_plot_drawing_new"):    
+        if is_mouse_button_dragging(0,.01):
+            if proofreader.get_drag_in_current() == None:
+                proofreader.set_drag_in_current(mouse_pos[0])
+            dout = mouse_pos[0]
+            if dout < 10:
+                dout = 0
+            if dout > 1190:
+                dout = 1200
+            proofreader.set_drag_out_current(dout)
+            proofreader.draw_dragbox("current_plot_drawing_new", dout)
+        else: 
+            #if drag values set, copy and then clear
+            if proofreader.get_drag_in_current():
+                din = proofreader.get_drag_in_current()
+                dout = proofreader.get_drag_out_current()
+
+                proofreader.set_selection_range_current(din,dout)
+                proofreader.set_selection_range_next(None, None)
+                proofreader.set_drag_in_current(None)
+            proofreader.draw_selector("current_plot_drawing_new", mouse_pos[0])
+    elif is_item_hovered("next_plot_drawing_new"):
+        if is_mouse_button_dragging(0,.01):
+            if proofreader.get_drag_in_next() == None:
+                proofreader.set_drag_in_next(mouse_pos[0])
+            dout = mouse_pos[0]
+            if dout < 10:
+                dout = 0
+            if dout > 1190:
+                dout = 1200
+            proofreader.set_drag_out_next(dout)
+            proofreader.draw_dragbox("next_plot_drawing_new", dout)
+        else: 
+            #if drag values set, copy and then clear
+            if proofreader.get_drag_in_next():
+                din = proofreader.get_drag_in_next()
+                dout = proofreader.get_drag_out_next()
+
+                proofreader.set_selection_range_next(din,dout)
+                proofreader.set_selection_range_next(None, None)
+                proofreader.set_drag_in_next(None)
+            proofreader.draw_selector("next_plot_drawing_new", mouse_pos[0])
+
+# def mouse_release_proofread_call(sender, data):
+#     if proofreader.get_drag_in_current():
+#         proofreader.set_drag_in_current(None)
 
 # callbacks for Other Tools
 def tools_open_project_call(sender, data):
@@ -570,6 +742,7 @@ def tools_process_wavs_call(sender, data):
             text = text.strip()
             tfm.build_file(pname + '\\' + wav_path, processedpath)
             print(f"Processing {wav_path}")
+            set_value("tools_status", "Processing {}".format(wav_path))
             if get_value("tools_compress"):                        
                 w = AudioSegment.from_wav(processedpath)
                 w = effects.compress_dynamic_range(w, threshold=-10)
@@ -590,6 +763,11 @@ def add_tools_project_combine_call(sender, data):
 def tools_table_combine_call(sender, data):
     pass
 
+def tools_export_sets_call(sender, data):
+    pass
+
+def tools_format_text_call(sender, data):
+    pass
 
 # Main functions
 themes = ["Dark", "Light", "Classic", "Dark 2", "Grey", "Dark Grey", "Cherry", "Purple", "Gold", "Red"]
@@ -601,9 +779,8 @@ def apply_font_scale_call(sender, data):
     scale = .01 * float(get_value("Font Scale"))
     set_global_font_scale(scale)
 
-
-
 def render_call(sender, data):
+    # keyboard handling for proofreader
     if is_key_pressed(mvKey_Control) and is_key_pressed(mvKey_S):
         save_csv_proofread_call("", "")
 
@@ -633,20 +810,20 @@ def render_call(sender, data):
     if is_key_pressed(mvKey_Prior):
         current_play_call("","") 
 
-    if is_key_pressed(mvKey_F9):
-        current_play_to_selection_call("","") 
+    # if is_key_pressed(mvKey_F9):
+    #     current_play_to_selection_call("","") 
 
-    if is_key_pressed(mvKey_F10):
-        current_play_from_selection_call("","") 
+    # if is_key_pressed(mvKey_F10):
+    #     current_play_from_selection_call("","") 
 
     if is_key_pressed(mvKey_Next):
         next_play_call("","") 
 
-    if is_key_pressed(mvKey_F11):
-        next_play_to_selection_call("","") 
+    # if is_key_pressed(mvKey_F11):
+    #     next_play_to_selection_call("","") 
 
-    if is_key_pressed(mvKey_F12):
-        next_play_from_selection_call("","") 
+    # if is_key_pressed(mvKey_F12):
+    #     next_play_from_selection_call("","") 
     
     if is_key_pressed(mvKey_Pause):
         proofreader.stop()
@@ -663,6 +840,9 @@ proofreader = Proofreader()
 builder = Dataset_builder()
 set_mouse_click_callback(mouse_clicked_proofread_call)
 set_mouse_wheel_callback(mouse_wheel_proofread_call)
+set_mouse_move_callback(mouse_move_proofread_call)
+#set_mouse_release_callback(mouse_release_proofread_call)
+
 add_additional_font("CheyenneSans-Light.otf", 21)
 
 set_render_callback(render_call)
@@ -670,6 +850,7 @@ set_render_callback(render_call)
 #set autosave timer
 rt = RepeatedTimer(180, proofreader.autosave) #time in seconds per autosave
 rt.stop()
+
 
 with window("mainWin"):
 
@@ -723,7 +904,7 @@ with window("mainWin"):
             add_spacing(count=3)
             add_text("Use Google API enhanced 'video' model? (slightly extra cost)")
             add_same_line(spacing=10)          
-            add_checkbox("input_use_videomodel", default_value=1, label="")   
+            add_checkbox("input_use_videomodel", default_value=0, label="")   
             add_spacing(count=5)
             add_text("If using Aeneas, does the text have proper punctuation? ")
             add_same_line(spacing=10)          
@@ -767,9 +948,10 @@ with window("mainWin"):
             add_spacing(count=2)
             with group("group5"):
                 add_input_text("current_input_text", width=1200, default_value="", label="" )
-                add_plot("current_plot", label="Current Wav", width=1200, height=200, xaxis_no_tick_labels=True,  
-                    yaxis_no_tick_labels=True, no_mouse_pos=True, crosshairs=True, xaxis_lock_min=True, xaxis_lock_max=True, yaxis_lock_min=True, yaxis_lock_max=True)
-                add_drawing("current_plot_drawing", width=1200, height=16)
+                add_drawing("current_plot_drawing_new", width=1200, height=200)
+                # add_plot("current_plot", show=False, label="Current Wav", width=1200, height=200, xaxis_no_tick_labels=True,  
+                #     yaxis_no_tick_labels=True, no_mouse_pos=True, crosshairs=True, xaxis_lock_min=True, xaxis_lock_max=True, yaxis_lock_min=True, yaxis_lock_max=True)
+                # add_drawing("current_plot_drawing", show=False, width=1200, height=16)
             add_same_line(spacing=10)      
             with group("group1"): 
                 add_button("save_all", callback=save_all_call, label="Save all")    
@@ -777,21 +959,28 @@ with window("mainWin"):
                 add_button("current_play", callback=current_play_call, label="Play")
                 add_same_line(spacing=10)
                 add_image_button("stop_playing", "stop.png", callback=stop_playing_call, height=20, width=20, background_color=[0,0,0,255])  
-                add_button("current_play_to_selection", callback=current_play_to_selection_call, label="Play to selection")       
-                add_button("current_play_from_selection", callback=current_play_from_selection_call, label="Play from selection")  
-                add_button("current_send", callback=current_send_call, label="Send end cut to Next")  
-                #add_button("current_save", callback=current_save_call, label="Save wav")
-                add_spacing(count=5)   
-                add_button("current_delete_beginningcut", callback=current_delete_beginningcut_call, label="Cut and delete beginning")
-                add_button("current_delete_endcut", callback=current_delete_endcut_call, label="Cut and delete end")
+                # add_button("current_play_to_selection", callback=current_play_to_selection_call, label="Play to selection")       
+                # add_button("current_play_from_selection", callback=current_play_from_selection_call, label="Play from selection")  
+                add_button("play_selection_current", callback=play_selection_call, label="Play selection")   
+                add_button("cut_selection_current", callback=cut_selection_call, label="Cut selection")   
+                add_button("paste_selection_current", callback=paste_selection_call, label="Paste selection")   
+
+                # add_button("current_send", callback=current_send_call, label="Send end cut to Next")  
+                # add_button("current_save", callback=current_save_call, label="Save wav")
+                # add_spacing(count=5)   
+                # add_button("current_delete_beginningcut", callback=current_delete_beginningcut_call, label="Cut and delete beginning")
+                # add_button("current_delete_endcut", callback=current_delete_endcut_call, label="Cut and delete end")
+                add_spacing(count=5)
                 add_button("current_remove", callback=current_remove_call, label="Remove entry!")
             proofreader.current_plot_drawing_set_point(0)
             add_spacing(count=5)
             with group("group6"):
-                add_input_text("next_input_text", width=1200, default_value="", label="" )      
-                add_plot("next_plot", label="Next Wav", width=1200, height=200, xaxis_no_tick_labels=True, 
-                    yaxis_no_tick_labels=True, no_mouse_pos=True, crosshairs=True, xaxis_lock_min=True, xaxis_lock_max=True, yaxis_lock_min=True, yaxis_lock_max=True)
-                add_drawing("next_plot_drawing", width=1200, height=10)  
+                add_input_text("next_input_text", width=1200, default_value="", label="" ) 
+                add_drawing("next_plot_drawing_new", width=1200, height=200)
+     
+                # add_plot("next_plot", label="Next Wav", width=1200, height=200, xaxis_no_tick_labels=True, 
+                #     yaxis_no_tick_labels=True, no_mouse_pos=True, crosshairs=True, xaxis_lock_min=True, xaxis_lock_max=True, yaxis_lock_min=True, yaxis_lock_max=True)
+                # add_drawing("next_plot_drawing", width=1200, height=10)  
             add_same_line(spacing=10)
             with group("group2"):
                 add_button("save_all2", callback=save_all_call, label="Save all")   
@@ -799,13 +988,17 @@ with window("mainWin"):
                 add_button("next_play", callback=next_play_call, label="Play")
                 add_same_line(spacing=10)
                 add_image_button("stop_playing2", "stop.png", callback=stop_playing_call, height=20, width=20, background_color=[0,0,0,255])       
-                add_button("next_play_to_selection", callback=next_play_to_selection_call, label="Play to selection")  
-                add_button("next_play_from_selection", callback=next_play_from_selection_call, label="Play from selection")  
-                add_button("next_send", callback=next_send_call, label="Send beginning cut to Current")  
-                #add_button("next_save", callback=next_save_call, label="Save wav")    
-                add_spacing(count=5)   
-                add_button("next_delete_beginningcut", callback=next_delete_beginningcut_call, label="Cut and delete beginning")                 
-                add_button("next_delete_endcut", callback=next_delete_endcut_call, label="Cut and delete end")
+                add_button("play_selection_next", callback=play_selection_call, label="Play selection")   
+                add_button("cut_selection_next", callback=cut_selection_call, label="Cut selection")   
+                add_button("paste_selection_next", callback=paste_selection_call, label="Paste selection")                   
+                # add_button("next_play_to_selection", callback=next_play_to_selection_call, label="Play to selection")  
+                # add_button("next_play_from_selection", callback=next_play_from_selection_call, label="Play from selection")  
+                # add_button("next_send", callback=next_send_call, label="Send beginning cut to Current")  
+                # add_button("next_save", callback=next_save_call, label="Save wav")    
+                # add_spacing(count=5)   
+                # add_button("next_delete_beginningcut", callback=next_delete_beginningcut_call, label="Cut and delete beginning")                 
+                # add_button("next_delete_endcut", callback=next_delete_endcut_call, label="Cut and delete end")
+                add_spacing(count=5)
                 add_button("next_remove", callback=next_remove_call, label="Remove entry!")            
             proofreader.next_plot_drawing_set_point(0)
 
@@ -826,13 +1019,19 @@ with window("mainWin"):
             add_same_line(spacing=5)
             add_label_text("tools_project_name", label="")
             add_spacing(count=3)
-            add_text("Wav Operations:")
+            add_text("Text operations:")
+            add_spacing(count=3)
+            add_button("tools_format_text", callback=tools_format_text_call, label="Trim text and\nadd '~' endchar")  
+            add_spacing(count=3)
+            add_text("Wav operations:")
             add_spacing(count=3)
             add_checkbox("tools_compress", default_value=1, label="Add compression with -10dB threshold?") 
             add_checkbox("tools_resample", default_value=1, label="Resample to 22050 rate?") 
             add_checkbox("tools_trimadd", default_value=1, label="Trim audio and pad with silences?") 
             add_spacing(count=3)
             add_button("tools_process_wavs", callback=tools_process_wavs_call, label="Process wavs")  
+            add_spacing(count=3)
+            add_button("tools_export_sets", callback=tools_export_sets_call, label="Export training, validation,\nand waveglow csv files")  
             add_spacing(count=3)
             add_drawing("hline3", width=800, height=1)
             draw_line("hline3", [0, 0], [800, 0], [255, 0, 0, 255], 1)  
@@ -844,5 +1043,6 @@ with window("mainWin"):
             add_table("tools_table_combine", ["Projects to combine"], callback=tools_table_combine_call, height=100, width=200)
             add_spacing(count=3)
             add_label_text("tools_status", label="")
+
 
 start_dearpygui(primary_window="mainWin")

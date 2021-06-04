@@ -17,19 +17,30 @@ import numpy as np
 import re
 import shutil
 import simpleaudio as sa
+import math
 
 class Proofreader:
     def __init__(self):
         self.current = None
+        self.current_cut = None
         self.current_point = None
         self.current_plot_point = None
+        self.current_p = None
         self.next = None
+        self.next_cut = None
         self.next_point = None
         self.next_plot_point = None
+        self.next_p = None
         self.selected_row = 0
         self.num_items = 0
         self.activated = False
         self.fname = None
+        self.drag_in_current = None
+        self.drag_in_next = None
+        self.drag_out_current = None
+        self.drag_out_next = None
+        self.selection_range_current = [0,0]
+        self.selection_range_next = [0,0]
 
     def set_filename(self, fname):
         self.fname = fname
@@ -85,8 +96,12 @@ class Proofreader:
 
         set_value("current_input_text", get_table_item("table_proofread", row, 1))
         set_value("next_input_text", get_table_item("table_proofread", row+1, 1))
-        configure_item("current_plot", label=current_path)
-        configure_item("next_plot", label=next_path)
+        # configure_item("current_plot", label=current_path)
+        # configure_item("next_plot", label=next_path)
+
+        # set_value("current_plot_label", current_path)
+
+
         # set_value("wav_current_label", current_path)
         # set_value("wav_next_label", next_path)
         self.set_current(current_wav)
@@ -112,8 +127,12 @@ class Proofreader:
 
         set_value("current_input_text", get_table_item("table_proofread", row, 1))
         set_value("next_input_text", get_table_item("table_proofread", row+1, 1))
-        configure_item("current_plot", label=current_path)
-        configure_item("next_plot", label=next_path)
+        # configure_item("current_plot", label=current_path)
+        # configure_item("next_plot", label=next_path)
+
+        # set_value("current_plot_label", current_path)
+
+
         # set_value("wav_current_label", current_path)
         # set_value("wav_next_label", next_path)
         self.set_current(current_wav)
@@ -192,14 +211,42 @@ class Proofreader:
         current_x_axis = []
         next_x_axis = []
 
+        current_polyline = []
+        next_polyline = []
+
+        x_step = float(len(current_float32) / 1200)
+        y_max = max(current_float32)
+        x_step_count = 0
+        c = 0
         for i in range(0, len(current_float32)):
             current_x_axis.append(i)
+            if (i >= x_step_count):
+                y_axis_val = ((current_float32[i] + y_max) / (y_max*2)) * 200 
+                current_polyline.append([ c, y_axis_val ])
+                c += 1
+                x_step_count += x_step
+
+        x_step = float(len(next_float32) / 1200)
+        y_max = max(next_float32)
+        x_step_count = 0
+        c = 0
         for i in range(0, len(next_float32)):
-            next_x_axis.append(i)  
+            next_x_axis.append(i)
+            if (i >= x_step_count):
+                y_axis_val = ((next_float32[i] + y_max) / (y_max*2)) * 200 
+                next_polyline.append([ c, y_axis_val ])
+                c += 1
+                x_step_count += x_step 
 
         #print("current_plot length for sample rate is: {}".format(len(current_x_axis) / 44100))     
-        add_line_series("current_plot", "", current_x_axis, current_float32, weight=2)
-        add_line_series("next_plot", "", next_x_axis, next_float32, weight=2)
+        # add_line_series("current_plot", "", current_x_axis, current_float32, weight=2)
+        # add_line_series("next_plot", "", next_x_axis, next_float32, weight=2)
+
+        #test drawing 
+        clear_drawing("current_plot_drawing_new")
+        draw_polyline("current_plot_drawing_new", current_polyline, [255,255,0,255], thickness=3)
+        clear_drawing("next_plot_drawing_new")
+        draw_polyline("next_plot_drawing_new", next_polyline, [255,255,0,255], thickness=3)
 
     def current_plot_drawing_set_point(self, point):
         self.current_point = point
@@ -212,3 +259,92 @@ class Proofreader:
         draw_line("next_plot_drawing", [0,5], [1200, 5], [0,19,94, 255], 10)
         if point:
             draw_line("next_plot_drawing", [point-3,5], [point+3, 5], [255, 0, 0, 255], 10)
+
+    def draw_selector(self, drawing_name, x_axis):
+        delete_draw_command("current_plot_drawing_new", 'selector')
+        delete_draw_command("next_plot_drawing_new", 'selector')
+        
+        draw_line(drawing_name, [x_axis, 0], [x_axis, 200], [255,0,255,255], 3, tag='selector')
+
+    def draw_dragbox(self, drawing_name, x_axis):
+        delete_draw_command("current_plot_drawing_new", 'selector')
+        delete_draw_command("current_plot_drawing_new", 'dragbox')
+        delete_draw_command("current_plot_drawing_new", 'p_selector')
+        delete_draw_command("next_plot_drawing_new", 'selector')
+        delete_draw_command("next_plot_drawing_new", 'dragbox')
+        delete_draw_command("next_plot_drawing_new", 'p_selector')
+        if drawing_name == "current_plot_drawing_new":
+            draw_rectangle(drawing_name, [self.drag_in_current, 0], [x_axis, 200], [255, 0, 0, 255], fill=[204, 229, 255, 80], rounding=0, thickness=2.0, tag='dragbox')
+        elif drawing_name == "next_plot_drawing_new":
+            draw_rectangle(drawing_name, [self.drag_in_next, 0], [x_axis, 200], [255, 0, 0, 255], fill=[204, 229, 255, 80], rounding=0, thickness=2.0, tag='dragbox')
+
+    def draw_p_selection(self, drawing_name, x_axis):
+        delete_draw_command("current_plot_drawing_new", 'selector')
+        delete_draw_command("current_plot_drawing_new", 'dragbox')
+        delete_draw_command("current_plot_drawing_new", 'p_selector')
+        delete_draw_command("next_plot_drawing_new", 'selector')
+        delete_draw_command("next_plot_drawing_new", 'dragbox')
+        delete_draw_command("next_plot_drawing_new", 'p_selector')        
+        draw_line(drawing_name, [x_axis, 0], [x_axis, 200], [255,0,0,255], 5, tag='p_selector')
+
+    def set_drag_in_current(self, x_axis):
+        self.drag_in_current = x_axis
+
+    def get_drag_in_current(self):
+        return self.drag_in_current
+
+    def set_drag_in_next(self, x_axis):
+        self.drag_in_next = x_axis
+
+    def get_drag_in_next(self):
+        return self.drag_in_next
+
+    def set_drag_out_current(self, x_axis):
+        self.drag_out_current = x_axis
+
+    def get_drag_out_current(self):
+        return self.drag_out_current
+
+    def set_drag_out_next(self, x_axis):
+        self.drag_out_next = x_axis
+
+    def get_drag_out_next(self):
+        return self.drag_out_next        
+
+    def set_selection_range_current(self, x, y):
+        self.selection_range_current[0] = x
+        self.selection_range_current[1] = y
+
+    def get_selection_range_current(self):
+        return self.selection_range_current[0], self.selection_range_current[1]
+
+    def set_selection_range_next(self, x, y):
+        self.selection_range_next[0] = x
+        self.selection_range_next[1] = y
+
+    def get_selection_range_next(self):
+        return self.selection_range_next[0], self.selection_range_next[1]
+
+    def set_current_cut(self, cut):
+        self.current_cut = cut
+    
+    def get_current_cut(self):
+        return self.current_cut
+
+    def set_next_cut(self, cut):
+        self.next_cut = cut
+    
+    def get_next_cut(self):
+        return self.next_cut        
+
+    def set_current_p(self, p):
+        self.current_p = p
+
+    def get_current_p(self):
+        return self.current_p
+
+    def set_next_p(self, p):
+        self.next_p = p
+
+    def get_next_p(self):
+        return self.next_p

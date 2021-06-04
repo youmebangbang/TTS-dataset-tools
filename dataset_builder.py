@@ -203,6 +203,7 @@ class Dataset_builder:
                     text = text.replace("%", " percent")
                     text = text.replace("cuz", "cause")
                     text = text.replace("-", " ")
+                    text = text.replace("&", "and")
                     print(text)
                     set_value("label_build_status", text)
 
