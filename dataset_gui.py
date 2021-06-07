@@ -274,6 +274,7 @@ def play_selection_call(sender, data):
     proofreader.stop()
     c = proofreader.get_selection_range_current()
     n = proofreader.get_selection_range_next()
+    # print(f"play c,n {c}   {n}")
     if c[0] != None:
         w_current = proofreader.get_current()
         if w_current == None:
@@ -289,7 +290,7 @@ def play_selection_call(sender, data):
             wav = w_current[in_point:out_point]
             proofreader.play(wav)  
 
-    elif n[0] != None:
+    if n[0] != None:
         w_next = proofreader.get_next()
         if w_next == None:
             return
@@ -769,23 +770,25 @@ def render_call(sender, data):
     elif is_mouse_button_released(0): 
         #if drag values set, copy and then clear
         mouse_pos = get_drawing_mouse_pos()   
-        if is_item_hovered("current_plot_drawing_new"): 
-            if proofreader.get_drag_in_current():
-                din = proofreader.get_drag_in_current()
-                dout = proofreader.get_drag_out_current()
+      
+        if proofreader.get_drag_in_current():
+            din = proofreader.get_drag_in_current()
+            dout = proofreader.get_drag_out_current()
 
-                proofreader.set_selection_range_current(din,dout)
-                proofreader.set_selection_range_next(None, None)
-                proofreader.set_drag_in_current(None)
-        elif is_item_hovered("next_plot_drawing_new"): 
+            proofreader.set_selection_range_current(din,dout)
+            proofreader.set_selection_range_next(None, None)
+            proofreader.set_drag_in_current(None)
+            proofreader.set_drag_out_current(None)
             #if drag values set, copy and then clear
-            if proofreader.get_drag_in_next():
-                din = proofreader.get_drag_in_next()
-                dout = proofreader.get_drag_out_next()
+        if proofreader.get_drag_in_next():
+            din = proofreader.get_drag_in_next()
+            dout = proofreader.get_drag_out_next()
 
-                proofreader.set_selection_range_next(din,dout)
-                proofreader.set_selection_range_current(None, None)
-                proofreader.set_drag_in_next(None)
+            proofreader.set_selection_range_next(din,dout)
+            proofreader.set_selection_range_current(None, None)
+            proofreader.set_drag_in_next(None)
+            proofreader.set_drag_out_next(None)
+        # print(f"drag done: {proofreader.get_selection_range_current()}  {proofreader.get_selection_range_next()}")
     else:
         # Draw selector
         mouse_pos = get_drawing_mouse_pos()   
@@ -793,10 +796,6 @@ def render_call(sender, data):
             proofreader.draw_selector("current_plot_drawing_new", mouse_pos[0])  
         elif is_item_hovered("next_plot_drawing_new"): 
             proofreader.draw_selector("next_plot_drawing_new", mouse_pos[0])
-
-
-
-
 
     # keyboard handling for proofreader
     if is_key_pressed(mvKey_Control) and is_key_pressed(mvKey_S):
