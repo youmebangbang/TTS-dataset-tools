@@ -971,9 +971,10 @@ with window("mainWin"):
             add_label_text("proofread_status", label="")     
             add_spacing(count=3)
             add_table("table_proofread", ["Wav path", "Text"], callback=table_row_selected_call, height=200)
-            add_spacing(count=2)
+            add_spacing(count=2) 
+            add_input_text("current_input_text", width=1500, default_value="", label="" )
+            add_spacing(count=2) 
             with group("group5"):
-                add_input_text("current_input_text", width=1200, default_value="", label="" )
                 add_drawing("current_plot_drawing_new", width=1200, height=200)
                 # add_plot("current_plot", show=False, label="Current Wav", width=1200, height=200, xaxis_no_tick_labels=True,  
                 #     yaxis_no_tick_labels=True, no_mouse_pos=True, crosshairs=True, xaxis_lock_min=True, xaxis_lock_max=True, yaxis_lock_min=True, yaxis_lock_max=True)
@@ -1000,8 +1001,9 @@ with window("mainWin"):
                 add_button("current_remove", callback=current_remove_call, label="Remove entry!")
             # proofreader.current_plot_drawing_set_point(0)
             add_spacing(count=5)
+            add_input_text("next_input_text", width=1500, default_value="", label="" ) 
+            add_spacing(count=3)
             with group("group6"):
-                add_input_text("next_input_text", width=1200, default_value="", label="" ) 
                 add_drawing("next_plot_drawing_new", width=1200, height=200)
      
                 # add_plot("next_plot", label="Next Wav", width=1200, height=200, xaxis_no_tick_labels=True, 
