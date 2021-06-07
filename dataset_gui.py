@@ -274,7 +274,7 @@ def play_selection_call(sender, data):
     proofreader.stop()
     c = proofreader.get_selection_range_current()
     n = proofreader.get_selection_range_next()
-    if c[0]:
+    if c[0] != None:
         w_current = proofreader.get_current()
         if w_current == None:
             return
@@ -289,7 +289,7 @@ def play_selection_call(sender, data):
             wav = w_current[in_point:out_point]
             proofreader.play(wav)  
 
-    elif n[0]:
+    elif n[0] != None:
         w_next = proofreader.get_next()
         if w_next == None:
             return
@@ -308,7 +308,7 @@ def cut_selection_call(sender, data):
     c = proofreader.get_selection_range_current()
     n = proofreader.get_selection_range_next()
 
-    if c[0]:
+    if c[0] != None:
         w_current = proofreader.get_current()
         if w_current == None:
             return
@@ -324,12 +324,14 @@ def cut_selection_call(sender, data):
             out_point = (out_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
 
             wav_cut = w_current[in_point:out_point]
-            proofreader.set_current_cut(wav_cut)
+            proofreader.set_cut(wav_cut)
             w_current = w_current[:in_point] + w_current[out_point:]
 
             proofreader.set_current(w_current)
+            proofreader.set_current_p(None)
+            proofreader.set_selection_range_current(None, None)
             proofreader.plot_wavs()
-    elif n[0]:
+    elif n[0] != None:
         w_next = proofreader.get_next()
         if w_next == None:
             return
@@ -344,17 +346,23 @@ def cut_selection_call(sender, data):
             out_point = (out_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
 
             wav_cut = w_next[in_point:out_point]
-            proofreader.set_next_cut(wav_cut)
+            proofreader.set_cut(wav_cut)
             w_next = w_next[:in_point] + w_next[out_point:]
 
             proofreader.set_next(w_next)
+            proofreader.set_next_p(None)
+            proofreader.set_selection_range_next(None, None)            
             proofreader.plot_wavs()        
 
 def paste_selection_call(sender, data):
     c = proofreader.get_current_p()
     n = proofreader.get_next_p()
     if c:
-        cut = proofreader.get_current_cut()
+        # if is_mouse_button_dragging(0,.01):
+        #     return
+        cut = proofreader.get_cut()
+        if not cut:
+            return
         w_current = proofreader.get_current()
         if w_current == None:
             return
@@ -362,10 +370,16 @@ def paste_selection_call(sender, data):
         in_point = (c / 1200) * (num_samples / proofreader.get_rate()) * 1000
         w_current = w_current[:in_point] + cut + w_current[in_point:]
         proofreader.set_current(w_current)
+        proofreader.set_current_p(None)
+        proofreader.set_cut(None)
         proofreader.plot_wavs()       
 
     elif n:
-        cut = proofreader.get_next_cut()
+        # if is_mouse_button_dragging(0,.01):
+        #     return        
+        cut = proofreader.get_cut()
+        if not cut:
+            return
         w_next = proofreader.get_next()
         if w_next == None:
             return
@@ -373,6 +387,8 @@ def paste_selection_call(sender, data):
         in_point = (n / 1200) * (num_samples / proofreader.get_rate()) * 1000
         w_next = w_next[:in_point] + cut + w_next[in_point:]
         proofreader.set_next(w_next)
+        proofreader.set_next_p(None)
+        proofreader.set_cut(None)
         proofreader.plot_wavs()            
 
 
@@ -631,15 +647,17 @@ def table_row_selected_call(sender, data):
 # Mouse Callbacks    
 
 def mouse_clicked_proofread_call(sender, data):
-    mouse_pos = get_mouse_pos(local=False)
-    point = mouse_pos[0]
-    #offset
-    point += -7
-    if is_item_clicked("current_plot"):        
-        proofreader.current_plot_drawing_set_point(point)
-    if is_item_clicked("next_plot"):
-        proofreader.next_plot_drawing_set_point(point)
+    # mouse_pos = get_mouse_pos(local=False)
+    # point = mouse_pos[0]
+    # #offset
+    # point += -7
+    # if is_item_clicked("current_plot"):        
+    #     proofreader.current_plot_drawing_set_point(point)
+    # if is_item_clicked("next_plot"):
+    #     proofreader.next_plot_drawing_set_point(point)
     
+    if is_mouse_button_clicked(0):
+        return
     mouse_pos = get_drawing_mouse_pos()       
     if is_item_hovered("current_plot_drawing_new"):
         proofreader.set_current_p(mouse_pos[0])
@@ -784,6 +802,12 @@ def render_call(sender, data):
     if is_key_pressed(mvKey_Control) and is_key_pressed(mvKey_S):
         save_csv_proofread_call("", "")
 
+    if is_key_pressed(mvKey_F11):
+        cut_selection_call("", "")
+
+    if is_key_pressed(mvKey_F12):
+        paste_selection_call("", "")
+
     if is_key_pressed(mvKey_Up):
         #move to previous entries
         proofreader.scroll_up()
@@ -792,11 +816,11 @@ def render_call(sender, data):
         #move to next entries
         proofreader.scroll_down()
         
-    if is_key_pressed(mvKey_Open_Brace):
-        current_send_call("","") 
+    # if is_key_pressed(mvKey_Open_Brace):
+    #     current_send_call("","") 
 
-    if is_key_pressed(mvKey_Close_Brace):
-        next_send_call("","") 
+    # if is_key_pressed(mvKey_Close_Brace):
+    #     next_send_call("","") 
 
     if is_key_pressed(mvKey_Insert):
         if proofreader.get_current() == None:
@@ -933,9 +957,9 @@ with window("mainWin"):
             add_same_line(spacing=100) 
             with group("group4"):
                 add_text("Keyboard shortcuts-")
-                add_text("Up arrow: load previous entries. \nDown arrow: load next entries.  \n'Insert': save all wavs and text. \n'[': Send current cut to beginning of next. \n']': Send next cut to end of current. \nUse mouse scroll wheel to navigate entries.")
+                add_text("Up arrow: load previous entries. \nDown arrow: load next entries.  \n'Insert': save all wavs and text. \nUse mouse scroll wheel to navigate entries.")
                 add_same_line(spacing=40)
-                add_text("'PgUp': current play. \n'F9': current play to selection. \n'F10': current play from selection. \n'PgDwn': next play. \n'F11': next play to selection. \n'F12': next play from selection. \n'Pause-Break': stop playing.") 
+                add_text("'PgUp': current play. \n'PgDwn': next play. \n'Pause-Break': stop playing.\n'F11': cut selection region.\n'F12': paste cut selection.") 
             add_button("open_csv_proofread", callback=open_csv_proofread_call, label="Open csv file")   
             add_same_line(spacing=50)     
             add_button("save_csv_proofread", callback=save_csv_proofread_call, label="Save csv file:")                    
@@ -972,7 +996,7 @@ with window("mainWin"):
                 # add_button("current_delete_endcut", callback=current_delete_endcut_call, label="Cut and delete end")
                 add_spacing(count=5)
                 add_button("current_remove", callback=current_remove_call, label="Remove entry!")
-            proofreader.current_plot_drawing_set_point(0)
+            # proofreader.current_plot_drawing_set_point(0)
             add_spacing(count=5)
             with group("group6"):
                 add_input_text("next_input_text", width=1200, default_value="", label="" ) 
@@ -1000,7 +1024,7 @@ with window("mainWin"):
                 # add_button("next_delete_endcut", callback=next_delete_endcut_call, label="Cut and delete end")
                 add_spacing(count=5)
                 add_button("next_remove", callback=next_remove_call, label="Remove entry!")            
-            proofreader.next_plot_drawing_set_point(0)
+            # proofreader.next_plot_drawing_set_point(0)
 
         with tab("tab3", label="Increase Dataset"):
             add_spacing(count=5)           

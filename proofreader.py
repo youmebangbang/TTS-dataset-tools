@@ -22,12 +22,11 @@ import math
 class Proofreader:
     def __init__(self):
         self.current = None
-        self.current_cut = None
         self.current_point = None
         self.current_plot_point = None
         self.current_p = None
         self.next = None
-        self.next_cut = None
+        self.cut = None
         self.next_point = None
         self.next_plot_point = None
         self.next_p = None
@@ -208,21 +207,28 @@ class Proofreader:
         next_int16 = numpy.frombuffer(audio2, dtype=numpy.int16)
         next_float32 = list(next_int16.astype(numpy.float32))
 
-        current_x_axis = []
-        next_x_axis = []
+        # current_x_axis = []
+        # next_x_axis = []
 
         current_polyline = []
         next_polyline = []
+
+        clear_drawing("current_plot_drawing_new")
+        clear_drawing("next_plot_drawing_new")
 
         x_step = float(len(current_float32) / 1200)
         y_max = max(current_float32)
         x_step_count = 0
         c = 0
+        
         for i in range(0, len(current_float32)):
-            current_x_axis.append(i)
+            # current_x_axis.append(i)
             if (i >= x_step_count):
-                y_axis_val = ((current_float32[i] + y_max) / (y_max*2)) * 200 
-                current_polyline.append([ c, y_axis_val ])
+                # Draw vertical bars method
+                # y_axis_val = ((current_float32[i] + y_max) / (y_max*2)) * 200 
+                y_axis_val = (current_float32[i] / y_max) * 100 
+                draw_line("current_plot_drawing_new", [c,100], [c, y_axis_val+100], [222, 44, 255, 255], 1)
+                # current_polyline.append([ c, y_axis_val ])
                 c += 1
                 x_step_count += x_step
 
@@ -231,10 +237,12 @@ class Proofreader:
         x_step_count = 0
         c = 0
         for i in range(0, len(next_float32)):
-            next_x_axis.append(i)
+            # next_x_axis.append(i)
             if (i >= x_step_count):
-                y_axis_val = ((next_float32[i] + y_max) / (y_max*2)) * 200 
-                next_polyline.append([ c, y_axis_val ])
+                # y_axis_val = ((next_float32[i] + y_max) / (y_max*2)) * 200 
+                y_axis_val = (next_float32[i] / y_max) * 100 
+                draw_line("next_plot_drawing_new", [c,100], [c, y_axis_val+100], [222, 44, 255, 255], 1)
+                # next_polyline.append([ c, y_axis_val ])
                 c += 1
                 x_step_count += x_step 
 
@@ -242,33 +250,36 @@ class Proofreader:
         # add_line_series("current_plot", "", current_x_axis, current_float32, weight=2)
         # add_line_series("next_plot", "", next_x_axis, next_float32, weight=2)
 
-        clear_drawing("current_plot_drawing_new")
-        draw_polyline("current_plot_drawing_new", current_polyline, [255,255,0,255], thickness=3)
+        # clear_drawing("current_plot_drawing_new")
+        # Polyline method
+        # draw_polyline("current_plot_drawing_new", current_polyline, [255,255,0,255], thickness=3)
+
         draw_text("current_plot_drawing_new", [10, 175], get_data("current_path"), size=20)
-        clear_drawing("next_plot_drawing_new")
         draw_polyline("next_plot_drawing_new", next_polyline, [255,255,0,255], thickness=3)
         draw_text("next_plot_drawing_new", [10, 175], get_data("next_path"), size=20)
 
 
-    def current_plot_drawing_set_point(self, point):
-        self.current_point = point
-        draw_line("current_plot_drawing", [0,5], [1200, 5], [0,19,94, 255], 10)
-        if point:
-            draw_line("current_plot_drawing", [point-3,5], [point+3, 5], [255, 0, 0, 255], 10)
+    # def current_plot_drawing_set_point(self, point):
+    #     self.current_point = point
+    #     draw_line("current_plot_drawing", [0,5], [1200, 5], [0,19,94, 255], 10)
+    #     if point:
+    #         draw_line("current_plot_drawing", [point-3,5], [point+3, 5], [255, 0, 0, 255], 10)
     
-    def next_plot_drawing_set_point(self, point):
-        self.next_point = point
-        draw_line("next_plot_drawing", [0,5], [1200, 5], [0,19,94, 255], 10)
-        if point:
-            draw_line("next_plot_drawing", [point-3,5], [point+3, 5], [255, 0, 0, 255], 10)
+    # def next_plot_drawing_set_point(self, point):
+    #     self.next_point = point
+    #     draw_line("next_plot_drawing", [0,5], [1200, 5], [0,19,94, 255], 10)
+    #     if point:
+    #         draw_line("next_plot_drawing", [point-3,5], [point+3, 5], [255, 0, 0, 255], 10)
 
     def draw_selector(self, drawing_name, x_axis):
         delete_draw_command("current_plot_drawing_new", 'selector')
         delete_draw_command("next_plot_drawing_new", 'selector')
         
-        draw_line(drawing_name, [x_axis, 0], [x_axis, 200], [255,0,255,255], 3, tag='selector')
+        draw_line(drawing_name, [x_axis, 0], [x_axis, 200], [0,0,255,255], 3, tag='selector')
 
     def draw_dragbox(self, drawing_name, x_axis):
+        self.set_next_p(None)
+        self.set_current_p(None)
         delete_draw_command("current_plot_drawing_new", 'selector')
         delete_draw_command("current_plot_drawing_new", 'dragbox')
         delete_draw_command("current_plot_drawing_new", 'p_selector')
@@ -281,6 +292,8 @@ class Proofreader:
             draw_rectangle(drawing_name, [self.drag_in_next, 0], [x_axis, 200], [255, 0, 0, 255], fill=[204, 229, 255, 80], rounding=0, thickness=2.0, tag='dragbox')
 
     def draw_p_selection(self, drawing_name, x_axis):
+        self.set_selection_range_current(None , None)
+        self.set_selection_range_next(None, None)
         delete_draw_command("current_plot_drawing_new", 'selector')
         delete_draw_command("current_plot_drawing_new", 'dragbox')
         delete_draw_command("current_plot_drawing_new", 'p_selector')
@@ -327,17 +340,11 @@ class Proofreader:
     def get_selection_range_next(self):
         return self.selection_range_next[0], self.selection_range_next[1]
 
-    def set_current_cut(self, cut):
-        self.current_cut = cut
+    def set_cut(self, cut):
+        self.cut = cut
     
-    def get_current_cut(self):
-        return self.current_cut
-
-    def set_next_cut(self, cut):
-        self.next_cut = cut
-    
-    def get_next_cut(self):
-        return self.next_cut        
+    def get_cut(self):
+        return self.cut 
 
     def set_current_p(self, p):
         self.current_p = p
