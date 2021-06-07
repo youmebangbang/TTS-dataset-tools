@@ -38,8 +38,8 @@ class Proofreader:
         self.drag_in_next = None
         self.drag_out_current = None
         self.drag_out_next = None
-        self.selection_range_current = [0,0]
-        self.selection_range_next = [0,0]
+        self.selection_range_current = [None, None]
+        self.selection_range_next = [None, None]
 
     def set_filename(self, fname):
         self.fname = fname
@@ -287,9 +287,9 @@ class Proofreader:
         delete_draw_command("next_plot_drawing_new", 'dragbox')
         delete_draw_command("next_plot_drawing_new", 'p_selector')
         if drawing_name == "current_plot_drawing_new":
-            draw_rectangle(drawing_name, [self.drag_in_current, 0], [x_axis, 200], [255, 0, 0, 255], fill=[204, 229, 255, 80], rounding=0, thickness=2.0, tag='dragbox')
+            draw_rectangle(drawing_name, [self.drag_in_current, 0], [x_axis, 200], [125, 50, 50, 255], fill=[204, 229, 255, 80], rounding=0, thickness=2.0, tag='dragbox')
         elif drawing_name == "next_plot_drawing_new":
-            draw_rectangle(drawing_name, [self.drag_in_next, 0], [x_axis, 200], [255, 0, 0, 255], fill=[204, 229, 255, 80], rounding=0, thickness=2.0, tag='dragbox')
+            draw_rectangle(drawing_name, [self.drag_in_next, 0], [x_axis, 200], [125, 50, 50, 255], fill=[204, 229, 255, 80], rounding=0, thickness=2.0, tag='dragbox')
 
     def draw_p_selection(self, drawing_name, x_axis):
         self.set_selection_range_current(None , None)

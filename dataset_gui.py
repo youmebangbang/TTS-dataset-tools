@@ -646,16 +646,7 @@ def table_row_selected_call(sender, data):
 
 # Mouse Callbacks    
 
-def mouse_clicked_proofread_call(sender, data):
-    # mouse_pos = get_mouse_pos(local=False)
-    # point = mouse_pos[0]
-    # #offset
-    # point += -7
-    # if is_item_clicked("current_plot"):        
-    #     proofreader.current_plot_drawing_set_point(point)
-    # if is_item_clicked("next_plot"):
-    #     proofreader.next_plot_drawing_set_point(point)
-    
+def mouse_clicked_proofread_call(sender, data):   
     if is_mouse_button_clicked(0):
         return
     mouse_pos = get_drawing_mouse_pos()       
@@ -676,54 +667,8 @@ def mouse_wheel_proofread_call(sender, data):
         if data < 0:
             proofreader.scroll_down()
 
-def mouse_move_proofread_call(sender, data):
-    mouse_pos = get_drawing_mouse_pos()   
-    if is_item_hovered("current_plot_drawing_new"):    
-        if is_mouse_button_dragging(0,.01):
-            if proofreader.get_drag_in_current() == None:
-                proofreader.set_drag_in_current(mouse_pos[0])
-            dout = mouse_pos[0]
-            if dout < 10:
-                dout = 0
-            if dout > 1190:
-                dout = 1200
-            proofreader.set_drag_out_current(dout)
-            proofreader.draw_dragbox("current_plot_drawing_new", dout)
-        else: 
-            #if drag values set, copy and then clear
-            if proofreader.get_drag_in_current():
-                din = proofreader.get_drag_in_current()
-                dout = proofreader.get_drag_out_current()
-
-                proofreader.set_selection_range_current(din,dout)
-                proofreader.set_selection_range_next(None, None)
-                proofreader.set_drag_in_current(None)
-            proofreader.draw_selector("current_plot_drawing_new", mouse_pos[0])
-    elif is_item_hovered("next_plot_drawing_new"):
-        if is_mouse_button_dragging(0,.01):
-            if proofreader.get_drag_in_next() == None:
-                proofreader.set_drag_in_next(mouse_pos[0])
-            dout = mouse_pos[0]
-            if dout < 10:
-                dout = 0
-            if dout > 1190:
-                dout = 1200
-            proofreader.set_drag_out_next(dout)
-            proofreader.draw_dragbox("next_plot_drawing_new", dout)
-        else: 
-            #if drag values set, copy and then clear
-            if proofreader.get_drag_in_next():
-                din = proofreader.get_drag_in_next()
-                dout = proofreader.get_drag_out_next()
-
-                proofreader.set_selection_range_next(din,dout)
-                proofreader.set_selection_range_current(None, None)
-                proofreader.set_drag_in_next(None)
-            proofreader.draw_selector("next_plot_drawing_new", mouse_pos[0])
-
-# def mouse_release_proofread_call(sender, data):
-#     if proofreader.get_drag_in_current():
-#         proofreader.set_drag_in_current(None)
+# def mouse_move_proofread_call(sender, data):
+  
 
 # callbacks for Other Tools
 def tools_open_project_call(sender, data):
@@ -798,9 +743,67 @@ def apply_font_scale_call(sender, data):
     set_global_font_scale(scale)
 
 def render_call(sender, data):
+    #mouse        
+    if is_mouse_button_dragging(0,.1):
+        mouse_pos = get_drawing_mouse_pos()   
+        if is_item_hovered("current_plot_drawing_new"):    
+            if proofreader.get_drag_in_current() == None:
+                proofreader.set_drag_in_current(mouse_pos[0])
+            dout = mouse_pos[0]
+            if dout < 10:
+                dout = 0
+            if dout > 1190:
+                dout = 1200
+            proofreader.set_drag_out_current(dout)
+            proofreader.draw_dragbox("current_plot_drawing_new", dout)
+        elif is_item_hovered("next_plot_drawing_new"):
+            if proofreader.get_drag_in_next() == None:
+                proofreader.set_drag_in_next(mouse_pos[0])
+            dout = mouse_pos[0]
+            if dout < 10:
+                dout = 0
+            if dout > 1190:
+                dout = 1200
+            proofreader.set_drag_out_next(dout)
+            proofreader.draw_dragbox("next_plot_drawing_new", dout)
+    elif is_mouse_button_released(0): 
+        #if drag values set, copy and then clear
+        mouse_pos = get_drawing_mouse_pos()   
+        if is_item_hovered("current_plot_drawing_new"): 
+            if proofreader.get_drag_in_current():
+                din = proofreader.get_drag_in_current()
+                dout = proofreader.get_drag_out_current()
+
+                proofreader.set_selection_range_current(din,dout)
+                proofreader.set_selection_range_next(None, None)
+                proofreader.set_drag_in_current(None)
+        elif is_item_hovered("next_plot_drawing_new"): 
+            #if drag values set, copy and then clear
+            if proofreader.get_drag_in_next():
+                din = proofreader.get_drag_in_next()
+                dout = proofreader.get_drag_out_next()
+
+                proofreader.set_selection_range_next(din,dout)
+                proofreader.set_selection_range_current(None, None)
+                proofreader.set_drag_in_next(None)
+    else:
+        # Draw selector
+        mouse_pos = get_drawing_mouse_pos()   
+        if is_item_hovered("current_plot_drawing_new"):        
+            proofreader.draw_selector("current_plot_drawing_new", mouse_pos[0])  
+        elif is_item_hovered("next_plot_drawing_new"): 
+            proofreader.draw_selector("next_plot_drawing_new", mouse_pos[0])
+
+
+
+
+
     # keyboard handling for proofreader
     if is_key_pressed(mvKey_Control) and is_key_pressed(mvKey_S):
         save_csv_proofread_call("", "")
+
+    if is_key_pressed(mvKey_F10):
+        play_selection_call("", "")
 
     if is_key_pressed(mvKey_F11):
         cut_selection_call("", "")
@@ -864,7 +867,7 @@ proofreader = Proofreader()
 builder = Dataset_builder()
 set_mouse_click_callback(mouse_clicked_proofread_call)
 set_mouse_wheel_callback(mouse_wheel_proofread_call)
-set_mouse_move_callback(mouse_move_proofread_call)
+# set_mouse_move_callback(mouse_move_proofread_call)
 #set_mouse_release_callback(mouse_release_proofread_call)
 
 add_additional_font("CheyenneSans-Light.otf", 21)
@@ -959,7 +962,7 @@ with window("mainWin"):
                 add_text("Keyboard shortcuts-")
                 add_text("Up arrow: load previous entries. \nDown arrow: load next entries.  \n'Insert': save all wavs and text. \nUse mouse scroll wheel to navigate entries.")
                 add_same_line(spacing=40)
-                add_text("'PgUp': current play. \n'PgDwn': next play. \n'Pause-Break': stop playing.\n'F11': cut selection region.\n'F12': paste cut selection.") 
+                add_text("'PgUp': current play. \n'PgDwn': next play. \n'Pause-Break': stop playing.\n'F10': Play selection.\n'F11': cut selection region.\nRight mouse button to set paste position.\n'F12': paste cut selection.") 
             add_button("open_csv_proofread", callback=open_csv_proofread_call, label="Open csv file")   
             add_same_line(spacing=50)     
             add_button("save_csv_proofread", callback=save_csv_proofread_call, label="Save csv file:")                    
