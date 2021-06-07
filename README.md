@@ -9,7 +9,7 @@ Current limitations are that you will need to adjust column width of the proofre
 
 Using a VPN will interfere with long Google Speech to Text API requests.
 
-![Dataset GUI](https://github.com/youmebangbang/Automated-TTS-dataset-builder/blob/master/dataset_gui.png)
+![Dataset GUI](https://github.com/youmebangbang/Automated-TTS-dataset-builder/blob/master/example1.png)
 
 # Windows Setup
 pip install numpy
