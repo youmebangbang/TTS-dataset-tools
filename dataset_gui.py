@@ -290,7 +290,7 @@ def play_selection_call(sender, data):
             wav = w_current[in_point:out_point]
             proofreader.play(wav)  
 
-    if n[0] != None:
+    elif n[0] != None:
         w_next = proofreader.get_next()
         if w_next == None:
             return
@@ -308,18 +308,16 @@ def play_selection_call(sender, data):
 def cut_selection_call(sender, data):
     c = proofreader.get_selection_range_current()
     n = proofreader.get_selection_range_next()
-
+    print(f"cut selection {c}  {n}")
     if c[0] != None:
         w_current = proofreader.get_current()
-        if w_current == None:
-            return
         num_samples = len(w_current.get_array_of_samples())
         drag_in, drag_out = proofreader.get_selection_range_current()
         points = [drag_in, drag_out]
         in_point = min(points)
         out_point = max(points)
 
-        if in_point and out_point:
+        if in_point != None and out_point != None:
 
             in_point = (in_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
             out_point = (out_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
@@ -334,15 +332,13 @@ def cut_selection_call(sender, data):
             proofreader.plot_wavs()
     elif n[0] != None:
         w_next = proofreader.get_next()
-        if w_next == None:
-            return
         num_samples = len(w_next.get_array_of_samples())
         drag_in, drag_out = proofreader.get_selection_range_next()
         points = [drag_in, drag_out]
         in_point = min(points)
         out_point = max(points)
 
-        if in_point and out_point:
+        if in_point != None and out_point != None:
             in_point = (in_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
             out_point = (out_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
 
@@ -359,8 +355,6 @@ def paste_selection_call(sender, data):
     c = proofreader.get_current_p()
     n = proofreader.get_next_p()
     if c:
-        # if is_mouse_button_dragging(0,.01):
-        #     return
         cut = proofreader.get_cut()
         if not cut:
             return
@@ -375,9 +369,7 @@ def paste_selection_call(sender, data):
         proofreader.set_cut(None)
         proofreader.plot_wavs()       
 
-    elif n:
-        # if is_mouse_button_dragging(0,.01):
-        #     return        
+    elif n:    
         cut = proofreader.get_cut()
         if not cut:
             return
