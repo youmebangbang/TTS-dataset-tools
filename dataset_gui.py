@@ -94,41 +94,7 @@ def open_wav_file_call(sender, data):
 
 #Functions / callbacks for Proofreader
 def save_csv_proofread_call(sender, data):
-    if proofreader.get_current() == None:
-        return 
-    name = proofreader.get_filename()
-    #name = get_value("proofread_project_name")
-    if name:
-        newline = ""
-        # if data == "autosave":
-        #     with open("{}/{}".format(proofreader.get_project_path(), "autosave.csv"), 'w') as csv_file:
-        #         table = get_table_data("table_proofread")
-        #         for row in table:
-        #             csv_file.write("{}{}|{}".format(newline, row[0], row[1]))
-        #             newline = "\n"
-        #     set_value("proofread_status", "{}/{} saved".format(proofreader.get_project_path(), "autosave.csv"))            
-        #     #logging
-        #     with open("{}/logfile.txt".format(proofreader.get_project_path()), 'a') as log_file:
-        #         t = datetime.datetime.now()
-        #         tt = t.strftime("%c")
-        #         row = proofreader.get_selected_row()
-        #         last_wav = get_table_item("table_proofread", row, 0)
-        #         log_file.write("\n{}: Saved {} Last item selected: {}".format(tt, "autosave.csv", last_wav))            
-
-        with open("{}/{}".format(proofreader.get_project_path(), name), 'w') as csv_file:
-            table = get_table_data("table_proofread")
-            for row in table:
-                csv_file.write("{}{}|{}".format(newline, row[0], row[1]))
-                newline = "\n"
-        set_value("proofread_status", "{}/{} saved".format(proofreader.get_project_path(), name))
-        #logging
-        with open("{}/logfile.txt".format(proofreader.get_project_path()), 'a') as log_file:
-            t = datetime.datetime.now()
-            tt = t.strftime("%c")
-            row = proofreader.get_selected_row()
-            last_wav = get_table_item("table_proofread", row, 0)
-            log_file.write("\n{}: Saved {} Last item selected: {}".format(tt, name, last_wav))
-        
+    proofreader.save_csv_proofread()        
 
 def open_csv_proofread_call(sender, data):
     open_file_dialog(add_csv_file_proofread_call)
@@ -172,8 +138,6 @@ def add_csv_file_proofread_call(sender, data):
     add_data("next_path", next_path)
 
     # set_value("current_plot_label", current_path)
-
-
     # set_value("wav_current_label", current_path)
     # set_value("wav_next_label", next_path)
     proofreader.set_project_path(data[0])
@@ -271,119 +235,13 @@ def save_all_call(sender, data):
     next_save_call("","")
 
 def play_selection_call(sender, data):  
-    proofreader.stop()
-    c = proofreader.get_selection_range_current()
-    n = proofreader.get_selection_range_next()
-    # print(f"play c,n {c}   {n}")
-    if c[0] != None:
-        w_current = proofreader.get_current()
-        if w_current == None:
-            return
-        num_samples = len(w_current.get_array_of_samples())
-        drag_in, drag_out = proofreader.get_selection_range_current()
-        points = [drag_in, drag_out]
-        in_point = min(points)
-        out_point = max(points)
-        if in_point and out_point:
-            in_point = (in_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
-            out_point = (out_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
-            wav = w_current[in_point:out_point]
-            proofreader.play(wav)  
-
-    elif n[0] != None:
-        w_next = proofreader.get_next()
-        if w_next == None:
-            return
-        num_samples = len(w_next.get_array_of_samples())
-        drag_in, drag_out = proofreader.get_selection_range_next()
-        points = [drag_in, drag_out]
-        in_point = min(points)
-        out_point = max(points)
-        if in_point and out_point:
-            in_point = (in_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
-            out_point = (out_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
-            wav = w_next[in_point:out_point]
-            proofreader.play(wav)     
-
+    proofreader.play_selection()
+   
 def cut_selection_call(sender, data):
-    c = proofreader.get_selection_range_current()
-    n = proofreader.get_selection_range_next()
-    print(f"cut selection {c}  {n}")
-    if c[0] != None:
-        w_current = proofreader.get_current()
-        num_samples = len(w_current.get_array_of_samples())
-        drag_in, drag_out = proofreader.get_selection_range_current()
-        points = [drag_in, drag_out]
-        in_point = min(points)
-        out_point = max(points)
-
-        if in_point != None and out_point != None:
-
-            in_point = (in_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
-            out_point = (out_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
-
-            wav_cut = w_current[in_point:out_point]
-            proofreader.set_cut(wav_cut)
-            w_current = w_current[:in_point] + w_current[out_point:]
-
-            proofreader.set_current(w_current)
-            proofreader.set_current_p(None)
-            proofreader.set_selection_range_current(None, None)
-            proofreader.plot_wavs()
-    elif n[0] != None:
-        w_next = proofreader.get_next()
-        num_samples = len(w_next.get_array_of_samples())
-        drag_in, drag_out = proofreader.get_selection_range_next()
-        points = [drag_in, drag_out]
-        in_point = min(points)
-        out_point = max(points)
-
-        if in_point != None and out_point != None:
-            in_point = (in_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
-            out_point = (out_point / 1200) * (num_samples / proofreader.get_rate()) * 1000
-
-            wav_cut = w_next[in_point:out_point]
-            proofreader.set_cut(wav_cut)
-            w_next = w_next[:in_point] + w_next[out_point:]
-
-            proofreader.set_next(w_next)
-            proofreader.set_next_p(None)
-            proofreader.set_selection_range_next(None, None)            
-            proofreader.plot_wavs()        
-
+    proofreader.cut_selection()
+   
 def paste_selection_call(sender, data):
-    c = proofreader.get_current_p()
-    n = proofreader.get_next_p()
-    if c:
-        cut = proofreader.get_cut()
-        if not cut:
-            return
-        w_current = proofreader.get_current()
-        if w_current == None:
-            return
-        num_samples = len(w_current.get_array_of_samples())
-        in_point = (c / 1200) * (num_samples / proofreader.get_rate()) * 1000
-        w_current = w_current[:in_point] + cut + w_current[in_point:]
-        proofreader.set_current(w_current)
-        proofreader.set_current_p(None)
-        proofreader.set_cut(None)
-        proofreader.plot_wavs()       
-
-    elif n:    
-        cut = proofreader.get_cut()
-        if not cut:
-            return
-        w_next = proofreader.get_next()
-        if w_next == None:
-            return
-        num_samples = len(w_next.get_array_of_samples())
-        in_point = (n / 1200) * (num_samples / proofreader.get_rate()) * 1000
-        w_next = w_next[:in_point] + cut + w_next[in_point:]
-        proofreader.set_next(w_next)
-        proofreader.set_next_p(None)
-        proofreader.set_cut(None)
-        proofreader.plot_wavs()            
-
+    proofreader.paste_selection()
 
 # def current_play_from_selection_call(sender, data):
 #     proofreader.stop()
@@ -500,157 +358,41 @@ def paste_selection_call(sender, data):
 #         proofreader.plot_wavs()         
 
 def current_play_call(sender, data):
-    proofreader.stop()
-    wav = proofreader.get_current()
-    if wav == None:
-        return
-    proofreader.play(wav)
-    # sa.play_buffer(
-    #     wav.raw_data,
-    #     num_channels=wav.channels,
-    #     bytes_per_sample=wav.sample_width,
-    #     sample_rate=wav.frame_rate
-    # )
+    proofreader.current_play()
 
 def next_play_call(sender, data):
-    proofreader.stop()
-    wav = proofreader.get_next()
-    if wav == None:
-        return
-    proofreader.play(wav)
-    # sa.play_buffer(
-    #     wav.raw_data,
-    #     num_channels=wav.channels,
-    #     bytes_per_sample=wav.sample_width,
-    #     sample_rate=wav.frame_rate
-    # )
+    proofreader.next_play()
 
 def current_remove_call(sender, data):
-    if proofreader.get_current() == None:
-        return
-    row = proofreader.get_selected_row()
-    current_path = get_table_item("table_proofread", row, 0)
-    #path = Path(current_path)
-    #shutil.copy("{}/{}".format(proofreader.get_project_path(), current_path), "{}/wavs/removed_{}".format(proofreader.get_project_path(), path.name))
-    delete_row("table_proofread", row)
-    set_value("proofread_status", "Removed entry {}".format(current_path)) 
-    num_items =  proofreader.get_num_items() - 1
-    proofreader.set_num_items(num_items) 
-    
-    if num_items == row + 1:
-        #end of data   
-        current_path = get_table_item("table_proofread", row - 1, 0)
-        next_path = get_table_item("table_proofread", row, 0)
-        current_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), current_path))
-        next_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), next_path))
-        set_value("current_input_text", get_table_item("table_proofread", row - 1, 1))
-        set_value("next_input_text", get_table_item("table_proofread", row, 1))
-        proofreader.set_selected_row(row-1)
-    else:
-        current_path = get_table_item("table_proofread", row, 0)
-        next_path = get_table_item("table_proofread", row + 1, 0)
-        current_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), current_path))
-        next_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), next_path))
-        set_value("current_input_text", get_table_item("table_proofread", row, 1))
-        set_value("next_input_text", get_table_item("table_proofread", row + 1, 1))
-
-    add_data("current_path", current_path)
-    add_data("next_path", next_path)
-    #set_value("wav_current_label", current_path)
-    #set_value("wav_next_label", next_path)
-    proofreader.set_current(current_wav)
-    proofreader.set_next(next_wav)
-    proofreader.plot_wavs()
+    proofreader.current_remove()
 
 def next_remove_call(sender, data): 
-    if proofreader.get_next() == None:
-        return
-    row = proofreader.get_selected_row()
-    next_path = get_table_item("table_proofread", row+1, 0)
-    #path = Path(next_path)
-    #shutil.copy("{}/{}".format(proofreader.get_project_path(), next_path), "{}/wavs/removed_{}".format(proofreader.get_project_path(), path.name))
-    delete_row("table_proofread", row + 1)
-    set_value("proofread_status", "Removed entry {}".format(next_path)) 
-    num_items =  proofreader.get_num_items() - 1
-    proofreader.set_num_items(num_items) 
-    
-    if num_items == row + 1:
-        #end of data   
-        current_path = get_table_item("table_proofread", row - 1, 0)
-        next_path = get_table_item("table_proofread", row, 0)
-        current_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), current_path))
-        next_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), next_path))
-        set_value("current_input_text", get_table_item("table_proofread", row - 1, 1))
-        set_value("next_input_text", get_table_item("table_proofread", row, 1))
-        proofreader.set_selected_row(row-1)
-    else:
-        current_path = get_table_item("table_proofread", row, 0)
-        next_path = get_table_item("table_proofread", row + 1, 0)
-        current_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), current_path))
-        next_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), next_path))
-        set_value("current_input_text", get_table_item("table_proofread", row, 1))
-        set_value("next_input_text", get_table_item("table_proofread", row + 1, 1))
-
-    add_data("current_path", current_path)
-    add_data("next_path", next_path)
-    #set_value("wav_current_label", current_path)
-    #set_value("wav_next_label", next_path)
-    proofreader.set_current(current_wav)
-    proofreader.set_next(next_wav)
-    proofreader.plot_wavs()
+    proofreader.next_remove()
 
 def stop_playing_call(sender, data):
     proofreader.stop()
 
-def table_row_selected_call(sender, data):    
-    index = get_table_selections("table_proofread")
-    row = index[0][0]
-    col = index[0][1]        
-    set_table_selection("table_proofread", row, col, False) 
-    
-    if proofreader.get_num_items() == row + 1:
-        #clicked end of data
-        current_path = get_table_item("table_proofread", row-1, 0)
-        next_path = get_table_item("table_proofread", row, 0)
-        current_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), current_path))
-        next_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), next_path))
-        set_value("current_input_text", get_table_item("table_proofread", row-1, 1))
-        set_value("next_input_text", get_table_item("table_proofread", row, 1))
-        proofreader.set_selected_row(row - 1)
-        
-    else:
-        current_path = get_table_item("table_proofread", row, 0)
-        next_path = get_table_item("table_proofread", row+1, 0)
-        current_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), current_path))
-        next_wav = AudioSegment.from_wav("{}/{}".format(proofreader.get_project_path(), next_path))
-        set_value("current_input_text", get_table_item("table_proofread", row, 1))
-        set_value("next_input_text", get_table_item("table_proofread", row+1, 1))
-        proofreader.set_selected_row(row)
-        
-    add_data("current_path", current_path)
-    add_data("next_path", next_path)
-    #set_value("wav_current_label", current_path)
-    #set_value("wav_next_label", next_path)
-    proofreader.set_current(current_wav)
-    proofreader.set_next(next_wav)
-    #set_item_style_var("current_plot", mvGuiStyleVar_Name, "")
-    proofreader.plot_wavs()
-
+def table_row_selected_call(sender, data):  
+    proofreader.table_row_selected()
 
 # Mouse Callbacks    
 
 def mouse_clicked_proofread_call(sender, data):   
-    if is_mouse_button_clicked(0):
+    if is_mouse_button_clicked(1):        
+        mouse_pos = get_drawing_mouse_pos()       
+        if is_item_hovered("current_plot_drawing_new"):
+            proofreader.set_current_p(mouse_pos[0])
+            proofreader.set_next_p(None)
+            proofreader.draw_p_selection("current_plot_drawing_new", mouse_pos[0])
+        elif is_item_hovered("next_plot_drawing_new"):
+            proofreader.set_next_p(mouse_pos[0])
+            proofreader.set_current_p(None)
+            proofreader.draw_p_selection("next_plot_drawing_new", mouse_pos[0])
+
+    elif is_mouse_button_clicked(2):
+        proofreader.silence_selection()
+    else:
         return
-    mouse_pos = get_drawing_mouse_pos()       
-    if is_item_hovered("current_plot_drawing_new"):
-        proofreader.set_current_p(mouse_pos[0])
-        proofreader.set_next_p(None)
-        proofreader.draw_p_selection("current_plot_drawing_new", mouse_pos[0])
-    elif is_item_hovered("next_plot_drawing_new"):
-        proofreader.set_next_p(mouse_pos[0])
-        proofreader.set_current_p(None)
-        proofreader.draw_p_selection("next_plot_drawing_new", mouse_pos[0])
 
 
 def mouse_wheel_proofread_call(sender, data):
@@ -793,7 +535,7 @@ def render_call(sender, data):
     if is_key_pressed(mvKey_Control) and is_key_pressed(mvKey_S):
         save_csv_proofread_call("", "")
 
-    if is_key_pressed(mvKey_F10):
+    if is_key_pressed(mvKey_F9):
         play_selection_call("", "")
 
     if is_key_pressed(mvKey_F11):
@@ -951,9 +693,9 @@ with window("mainWin"):
             add_same_line(spacing=100) 
             with group("group4"):
                 add_text("Keyboard shortcuts-")
-                add_text("Up arrow: load previous entries. \nDown arrow: load next entries.  \n'Insert': save all wavs and text. \nUse mouse scroll wheel to navigate entries.")
+                add_text("Up arrow: load previous entries. \nDown arrow: load next entries.  \n'Insert': save all wavs and text. \nUse mouse scroll wheel to navigate entries.\nMiddle mouse button to silence selection.\nRight mouse button to set paste position.")
                 add_same_line(spacing=40)
-                add_text("'PgUp': current play. \n'PgDwn': next play. \n'Pause-Break': stop playing.\n'F10': Play selection.\n'F11': cut selection region.\nRight mouse button to set paste position.\n'F12': paste cut selection.") 
+                add_text("'PgUp': current play. \n'PgDwn': next play. \n'Pause-Break': stop playing.\n'F9': Play selection.\n'F11': cut selection region.\n'F12': paste cut selection.") 
             add_button("open_csv_proofread", callback=open_csv_proofread_call, label="Open csv file")   
             add_same_line(spacing=50)     
             add_button("save_csv_proofread", callback=save_csv_proofread_call, label="Save csv file:")                    
@@ -964,7 +706,7 @@ with window("mainWin"):
             add_spacing(count=3)
             add_table("table_proofread", ["Wav path", "Text"], callback=table_row_selected_call, height=200)
             add_spacing(count=2) 
-            add_input_text("current_input_text", width=1500, default_value="", label="" )
+            add_input_text("current_input_text", width=1475, default_value="", label="" )
             add_spacing(count=2) 
             with group("group5"):
                 add_drawing("current_plot_drawing_new", width=1200, height=200)
@@ -993,7 +735,7 @@ with window("mainWin"):
                 add_button("current_remove", callback=current_remove_call, label="Remove entry!")
             # proofreader.current_plot_drawing_set_point(0)
             add_spacing(count=5)
-            add_input_text("next_input_text", width=1500, default_value="", label="" ) 
+            add_input_text("next_input_text", width=1475, default_value="", label="" ) 
             add_spacing(count=3)
             with group("group6"):
                 add_drawing("next_plot_drawing_new", width=1200, height=200)

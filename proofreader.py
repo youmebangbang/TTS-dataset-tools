@@ -227,7 +227,7 @@ class Proofreader:
                 # Draw vertical bars method
                 # y_axis_val = ((current_float32[i] + y_max) / (y_max*2)) * 200 
                 y_axis_val = (current_float32[i] / y_max) * 100 
-                draw_line("current_plot_drawing_new", [c,100], [c, y_axis_val+100], [222, 44, 255, 255], 1)
+                draw_line("current_plot_drawing_new", [c,100], [c, y_axis_val+100], [222, 44, 255, 255], 2)
                 # current_polyline.append([ c, y_axis_val ])
                 c += 1
                 x_step_count += x_step
@@ -241,7 +241,7 @@ class Proofreader:
             if (i >= x_step_count):
                 # y_axis_val = ((next_float32[i] + y_max) / (y_max*2)) * 200 
                 y_axis_val = (next_float32[i] / y_max) * 100 
-                draw_line("next_plot_drawing_new", [c,100], [c, y_axis_val+100], [222, 44, 255, 255], 1)
+                draw_line("next_plot_drawing_new", [c,100], [c, y_axis_val+100], [222, 44, 255, 255], 2)
                 # next_polyline.append([ c, y_axis_val ])
                 c += 1
                 x_step_count += x_step 
@@ -301,6 +301,330 @@ class Proofreader:
         delete_draw_command("next_plot_drawing_new", 'dragbox')
         delete_draw_command("next_plot_drawing_new", 'p_selector')        
         draw_line(drawing_name, [x_axis, 0], [x_axis, 200], [255,0,0,255], 5, tag='p_selector')
+
+    def play_selection(self):
+        self.stop()
+        c = self.get_selection_range_current()
+        n = self.get_selection_range_next()
+        # print(f"play c,n {c}   {n}")
+        if c[0] != None:
+            w_current = self.get_current()
+            num_samples = len(w_current.get_array_of_samples())
+            drag_in, drag_out = self.get_selection_range_current()
+            points = [drag_in, drag_out]
+            in_point = min(points)
+            out_point = max(points)
+            if in_point != None and out_point != None:
+                in_point = (in_point / 1200) * (num_samples / self.get_rate()) * 1000
+                out_point = (out_point / 1200) * (num_samples / self.get_rate()) * 1000
+                wav = w_current[in_point:out_point]
+                self.play(wav)  
+
+        elif n[0] != None:
+            w_next = self.get_next()
+            num_samples = len(w_next.get_array_of_samples())
+            drag_in, drag_out = self.get_selection_range_next()
+            points = [drag_in, drag_out]
+            in_point = min(points)
+            out_point = max(points)
+            if in_point != None and out_point != None:
+                in_point = (in_point / 1200) * (num_samples / self.get_rate()) * 1000
+                out_point = (out_point / 1200) * (num_samples / self.get_rate()) * 1000
+                wav = w_next[in_point:out_point]
+                self.play(wav)     
+
+    def cut_selection(self):
+        c = self.get_selection_range_current()
+        n = self.get_selection_range_next()
+        # print(f"cut selection {c}  {n}")
+        if c[0] != None:
+            w_current = self.get_current()
+            num_samples = len(w_current.get_array_of_samples())
+            drag_in, drag_out = self.get_selection_range_current()
+            points = [drag_in, drag_out]
+            in_point = min(points)
+            out_point = max(points)
+
+            if in_point != None and out_point != None:
+
+                in_point = (in_point / 1200) * (num_samples / self.get_rate()) * 1000
+                out_point = (out_point / 1200) * (num_samples / self.get_rate()) * 1000
+
+                wav_cut = w_current[in_point:out_point]
+                self.set_cut(wav_cut)
+                w_current = w_current[:in_point] + w_current[out_point:]
+
+                self.set_current(w_current)
+                self.set_current_p(None)
+                self.set_selection_range_current(None, None)
+                self.plot_wavs()
+        elif n[0] != None:
+            w_next = self.get_next()
+            num_samples = len(w_next.get_array_of_samples())
+            drag_in, drag_out = self.get_selection_range_next()
+            points = [drag_in, drag_out]
+            in_point = min(points)
+            out_point = max(points)
+
+            if in_point != None and out_point != None:
+                in_point = (in_point / 1200) * (num_samples / self.get_rate()) * 1000
+                out_point = (out_point / 1200) * (num_samples / self.get_rate()) * 1000
+
+                wav_cut = w_next[in_point:out_point]
+                self.set_cut(wav_cut)
+                w_next = w_next[:in_point] + w_next[out_point:]
+
+                self.set_next(w_next)
+                self.set_next_p(None)
+                self.set_selection_range_next(None, None)            
+                self.plot_wavs()    
+
+    def paste_selection(self):        
+        c = self.get_current_p()
+        n = self.get_next_p()
+        if c:
+            cut = self.get_cut()
+            if not cut:
+                return
+            w_current = self.get_current()
+            if w_current == None:
+                return
+            num_samples = len(w_current.get_array_of_samples())
+            in_point = (c / 1200) * (num_samples / self.get_rate()) * 1000
+            w_current = w_current[:in_point] + cut + w_current[in_point:]
+            self.set_current(w_current)
+            self.set_current_p(None)
+            self.set_cut(None)
+            self.plot_wavs()       
+
+        elif n:    
+            cut = self.get_cut()
+            if not cut:
+                return
+            w_next = self.get_next()
+            if w_next == None:
+                return
+            num_samples = len(w_next.get_array_of_samples())
+            in_point = (n / 1200) * (num_samples / self.get_rate()) * 1000
+            w_next = w_next[:in_point] + cut + w_next[in_point:]
+            self.set_next(w_next)
+            self.set_next_p(None)
+            self.set_cut(None)
+            self.plot_wavs()            
+
+    def current_play(self):            
+        self.stop()
+        wav = self.get_current()
+        if wav == None:
+            return
+        self.play(wav)
+        # sa.play_buffer(
+        #     wav.raw_data,
+        #     num_channels=wav.channels,
+        #     bytes_per_sample=wav.sample_width,
+        #     sample_rate=wav.frame_rate
+        # )
+
+    def next_play(self):     
+        self.stop()
+        wav = self.get_next()
+        if wav == None:
+            return
+        self.play(wav)
+        # sa.play_buffer(
+        #     wav.raw_data,
+        #     num_channels=wav.channels,
+        #     bytes_per_sample=wav.sample_width,
+        #     sample_rate=wav.frame_rate
+        # )
+
+    def current_remove(self):          
+        if self.get_current() == None:
+            return
+        row = self.get_selected_row()
+        current_path = get_table_item("table_proofread", row, 0)
+        #path = Path(current_path)
+        #shutil.copy("{}/{}".format(self.get_project_path(), current_path), "{}/wavs/removed_{}".format(self.get_project_path(), path.name))
+        delete_row("table_proofread", row)
+        set_value("proofread_status", "Removed entry {}".format(current_path)) 
+        num_items =  self.get_num_items() - 1
+        self.set_num_items(num_items) 
+        
+        if num_items == row + 1:
+            #end of data   
+            current_path = get_table_item("table_proofread", row - 1, 0)
+            next_path = get_table_item("table_proofread", row, 0)
+            current_wav = AudioSegment.from_wav("{}/{}".format(self.get_project_path(), current_path))
+            next_wav = AudioSegment.from_wav("{}/{}".format(self.get_project_path(), next_path))
+            set_value("current_input_text", get_table_item("table_proofread", row - 1, 1))
+            set_value("next_input_text", get_table_item("table_proofread", row, 1))
+            self.set_selected_row(row-1)
+        else:
+            current_path = get_table_item("table_proofread", row, 0)
+            next_path = get_table_item("table_proofread", row + 1, 0)
+            current_wav = AudioSegment.from_wav("{}/{}".format(self.get_project_path(), current_path))
+            next_wav = AudioSegment.from_wav("{}/{}".format(self.get_project_path(), next_path))
+            set_value("current_input_text", get_table_item("table_proofread", row, 1))
+            set_value("next_input_text", get_table_item("table_proofread", row + 1, 1))
+
+        add_data("current_path", current_path)
+        add_data("next_path", next_path)
+        #set_value("wav_current_label", current_path)
+        #set_value("wav_next_label", next_path)
+        self.set_current(current_wav)
+        self.set_next(next_wav)
+        self.plot_wavs()
+
+    def next_remove(self):        
+        if self.get_next() == None:
+            return
+        row = self.get_selected_row()
+        next_path = get_table_item("table_proofread", row+1, 0)
+        #path = Path(next_path)
+        #shutil.copy("{}/{}".format(self.get_project_path(), next_path), "{}/wavs/removed_{}".format(self.get_project_path(), path.name))
+        delete_row("table_proofread", row + 1)
+        set_value("proofread_status", "Removed entry {}".format(next_path)) 
+        num_items =  self.get_num_items() - 1
+        self.set_num_items(num_items) 
+        
+        if num_items == row + 1:
+            #end of data   
+            current_path = get_table_item("table_proofread", row - 1, 0)
+            next_path = get_table_item("table_proofread", row, 0)
+            current_wav = AudioSegment.from_wav("{}/{}".format(self.get_project_path(), current_path))
+            next_wav = AudioSegment.from_wav("{}/{}".format(self.get_project_path(), next_path))
+            set_value("current_input_text", get_table_item("table_proofread", row - 1, 1))
+            set_value("next_input_text", get_table_item("table_proofread", row, 1))
+            self.set_selected_row(row-1)
+        else:
+            current_path = get_table_item("table_proofread", row, 0)
+            next_path = get_table_item("table_proofread", row + 1, 0)
+            current_wav = AudioSegment.from_wav("{}/{}".format(self.get_project_path(), current_path))
+            next_wav = AudioSegment.from_wav("{}/{}".format(self.get_project_path(), next_path))
+            set_value("current_input_text", get_table_item("table_proofread", row, 1))
+            set_value("next_input_text", get_table_item("table_proofread", row + 1, 1))
+
+        add_data("current_path", current_path)
+        add_data("next_path", next_path)
+        #set_value("wav_current_label", current_path)
+        #set_value("wav_next_label", next_path)
+        self.set_current(current_wav)
+        self.set_next(next_wav)
+        self.plot_wavs()
+
+    def table_row_selected(self):              
+        index = get_table_selections("table_proofread")
+        row = index[0][0]
+        col = index[0][1]        
+        set_table_selection("table_proofread", row, col, False) 
+        
+        if self.get_num_items() == row + 1:
+            #clicked end of data
+            current_path = get_table_item("table_proofread", row-1, 0)
+            next_path = get_table_item("table_proofread", row, 0)
+            current_wav = AudioSegment.from_wav("{}/{}".format(self.get_project_path(), current_path))
+            next_wav = AudioSegment.from_wav("{}/{}".format(self.get_project_path(), next_path))
+            set_value("current_input_text", get_table_item("table_proofread", row-1, 1))
+            set_value("next_input_text", get_table_item("table_proofread", row, 1))
+            self.set_selected_row(row - 1)
+            
+        else:
+            current_path = get_table_item("table_proofread", row, 0)
+            next_path = get_table_item("table_proofread", row+1, 0)
+            current_wav = AudioSegment.from_wav("{}/{}".format(self.get_project_path(), current_path))
+            next_wav = AudioSegment.from_wav("{}/{}".format(self.get_project_path(), next_path))
+            set_value("current_input_text", get_table_item("table_proofread", row, 1))
+            set_value("next_input_text", get_table_item("table_proofread", row+1, 1))
+            self.set_selected_row(row)
+            
+        add_data("current_path", current_path)
+        add_data("next_path", next_path)
+        #set_value("wav_current_label", current_path)
+        #set_value("wav_next_label", next_path)
+        self.set_current(current_wav)
+        self.set_next(next_wav)
+        #set_item_style_var("current_plot", mvGuiStyleVar_Name, "")
+        self.plot_wavs()
+
+    def save_csv_proofread(self):        
+        if self.get_current() == None:
+            return 
+        name = self.get_filename()
+        #name = get_value("proofread_project_name")
+        if name:
+            newline = ""
+            # if data == "autosave":
+            #     with open("{}/{}".format(self.get_project_path(), "autosave.csv"), 'w') as csv_file:
+            #         table = get_table_data("table_proofread")
+            #         for row in table:
+            #             csv_file.write("{}{}|{}".format(newline, row[0], row[1]))
+            #             newline = "\n"
+            #     set_value("proofread_status", "{}/{} saved".format(self.get_project_path(), "autosave.csv"))            
+            #     #logging
+            #     with open("{}/logfile.txt".format(self.get_project_path()), 'a') as log_file:
+            #         t = datetime.datetime.now()
+            #         tt = t.strftime("%c")
+            #         row = self.get_selected_row()
+            #         last_wav = get_table_item("table_proofread", row, 0)
+            #         log_file.write("\n{}: Saved {} Last item selected: {}".format(tt, "autosave.csv", last_wav))            
+
+            with open("{}/{}".format(self.get_project_path(), name), 'w') as csv_file:
+                table = get_table_data("table_proofread")
+                for row in table:
+                    csv_file.write("{}{}|{}".format(newline, row[0], row[1]))
+                    newline = "\n"
+            set_value("proofread_status", "{}/{} saved".format(self.get_project_path(), name))
+            #logging
+            with open("{}/logfile.txt".format(self.get_project_path()), 'a') as log_file:
+                t = datetime.datetime.now()
+                tt = t.strftime("%c")
+                row = self.get_selected_row()
+                last_wav = get_table_item("table_proofread", row, 0)
+                log_file.write("\n{}: Saved {} Last item selected: {}".format(tt, name, last_wav))
+
+    def silence_selection(self):
+        c = self.get_selection_range_current()
+        n = self.get_selection_range_next()
+        # print(f"cut selection {c}  {n}")
+        if c[0] != None:
+            w_current = self.get_current()
+            num_samples = len(w_current.get_array_of_samples())
+            drag_in, drag_out = self.get_selection_range_current()
+            points = [drag_in, drag_out]
+            in_point = min(points)
+            out_point = max(points)
+
+            if in_point != None and out_point != None:
+                in_point = (in_point / 1200) * (num_samples / self.get_rate()) * 1000
+                out_point = (out_point / 1200) * (num_samples / self.get_rate()) * 1000
+
+                wav_silent_region = w_current[in_point:out_point]
+                w_current = w_current[:in_point] + AudioSegment.silent(duration=(wav_silent_region.duration_seconds*1000)) + w_current[out_point:]
+
+                self.set_current(w_current)
+                self.set_current_p(None)
+                self.set_selection_range_current(None, None)
+                self.plot_wavs()
+        elif n[0] != None:
+            w_next = self.get_next()
+            num_samples = len(w_next.get_array_of_samples())
+            drag_in, drag_out = self.get_selection_range_next()
+            points = [drag_in, drag_out]
+            in_point = min(points)
+            out_point = max(points)
+
+            if in_point != None and out_point != None:
+                in_point = (in_point / 1200) * (num_samples / self.get_rate()) * 1000
+                out_point = (out_point / 1200) * (num_samples / self.get_rate()) * 1000
+
+                wav_silent_region = w_next[in_point:out_point]
+                w_next = w_next[:in_point] + AudioSegment.silent(duration=(wav_silent_region.duration_seconds*1000)) + w_next[out_point:]
+
+                self.set_next(w_next)
+                self.set_next_p(None)
+                self.set_selection_range_next(None, None)            
+                self.plot_wavs()    
+
 
     def set_drag_in_current(self, x_axis):
         self.drag_in_current = x_axis
