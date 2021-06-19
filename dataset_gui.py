@@ -25,6 +25,7 @@ from proofreader import *
 from dataset_builder import *
 import simpleaudio as sa
 import sox
+from shutil import copyfile
 
 
 class RepeatedTimer(object):
@@ -454,14 +455,49 @@ def tools_process_wavs_call(sender, data):
         print('\a') #system beep 
 
 
-def tools_open_project_combine_call(sender, data):
-    select_directory_dialog(add_tools_project_combine_call)
+def tools_open_project_merge_call(sender, data):
+    select_directory_dialog(add_tools_project_merge_call)
 
-def add_tools_project_combine_call(sender, data):
+def add_tools_project_merge_call(sender, data):
     # add project to table list
-    print(data[1])
+    project_path = data[0] + '\\' + data[1]
+    add_row("tools_table_merge", [project_path])
 
-def tools_table_combine_call(sender, data):
+def tools_merge_projects_call(sender, data):
+    table = get_table_data("tools_table_merge")
+    if not os.path.exists("merged"):
+        os.mkdir("merged")
+    if not os.path.exists("merged\\wavs"):
+        os.mkdir("merged\\wavs")
+    else:
+        os.rmdir("merged\\wavs")
+        os.mkdir("merged\\wavs")
+
+    with open("merged\\output.csv", 'w') as f:
+        newline = ''
+        for row in table:
+            with open(row[0] + '\\output.csv') as p:
+                lines = p.readlines()
+                for line in lines:
+                    wav_path, text = line.split('|') 
+                    text = text.strip()
+                    f.write(newline + wav_path + '|' + text)
+                    newline = '\n'
+                    #check to see if wav file already exists
+                    if os.path.exists("merged" + '\\' + wav_path):
+                        set_value("tools_status", "Error, duplicate wav path names with {} . Exiting merging.".format(wav_path))
+                        print("error duplicate wav paths!")
+                        return
+                    else:
+                        #copy wav to new directory
+                        copyfile(row[0] + '\\' + wav_path, "merged" + '\\' + wav_path)
+
+        print("Done merging!")
+        set_value("tools_status", "Done merging projects. Output at /merged")
+        print('\a') #system beep 
+
+
+def tools_table_merge_call(sender, data):
     pass
 
 def tools_export_sets_call(sender, data):
@@ -513,21 +549,50 @@ def tools_format_text_call(sender, data):
         os.mkdir(pname + '\\processed')    
     with open(pname + "\\output.csv", 'r') as f:      
         lines = f.readlines()
+        newline = ''
         for line in lines:
             wav_path, text = line.split('|') 
             text = text.strip() + '~'
-            newcsv.append(wav_path + '|' + text)
+            newcsv.append(newline + wav_path + '|' + text)
+            newline = '\n'
 
     with open(pname + '\\processed\output.csv', 'w') as f:
-        newline = ''
         for line in newcsv:
-            f.write(newline + line)
-            newline = '\n'
+            f.write(line)
 
         print("Done formatting text!")
         set_value("tools_status", "Done formatting text. Output at {}/processed/output.csv".format(pname))
         print('\a') #system beep 
 
+def tools_reindex_project_call(sender, data):
+    pname = get_value("tools_project_name")
+    index = int(get_value("tools_input_reindex"))
+    if not pname or not index:
+        return
+
+    newcsv = []
+
+    if not os.path.exists(pname + '\\reindexed'):
+        os.mkdir(pname + '\\reindexed')    
+    if not os.path.exists(pname + '\\reindexed\\wavs'):
+        os.mkdir(pname + '\\reindexed\\wavs')          
+    with open(pname + "\\output.csv", 'r') as f:      
+        lines = f.readlines()
+        newline = ''
+        for line in lines:
+            wav_path, text = line.split('|') 
+            text = text.strip()     
+            newcsv.append(newline + 'wavs/' + str(index) + '.wav' + '|' + text)
+            copyfile(pname + '\\' + wav_path, pname + '\\reindexed\\wavs\\' + str(index) + '.wav')
+            index += 1
+            newline = '\n'
+        with open(pname + '\\reindexed\\output.csv', 'w') as f:
+            for line in newcsv:
+                f.write(line)
+        print("Done reindexing!")
+        set_value("tools_status", "Done reindexing project. Output at {}/reindexed/".format(pname))
+        print('\a') #system beep 
+            
 # Main functions
 themes = ["Dark", "Light", "Classic", "Dark 2", "Grey", "Dark Grey", "Cherry", "Purple", "Gold", "Red"]
 def apply_theme_call(sender, data):
@@ -829,18 +894,16 @@ with window("mainWin"):
             add_spacing(count=5)           
 
         with tab("tab4", label="Other Tools"):
-            add_spacing(count=5)  
-            add_combo("Themes", items=themes, width=100, default_value="Dark", callback=apply_theme_call)
-            add_spacing(count=5)
-            add_slider_int("Font Scale", default_value=100, min_value=50, max_value=300, width=200, callback=apply_font_scale_call)
             add_spacing(count=5)
             add_drawing("hline3", width=800, height=1)
             draw_line("hline3", [0, 0], [800, 0], [255, 0, 0, 255], 1)  
-            add_text("COMBINE PROJECT FOLDERS INTO SINGLE PROJECT:")
+            add_text("MERGE PROJECT FOLDERS INTO SINGLE PROJECT:")
             add_spacing(count=5)
-            add_button("tools_open_project_combine", callback=tools_open_project_combine_call, label="Add project")
+            add_button("tools_open_project_merge", callback=tools_open_project_merge_call, label="Add project")
             add_spacing(count=3)
-            add_table("tools_table_combine", ["Projects to combine"], callback=tools_table_combine_call, height=100, width=200)
+            add_table("tools_table_merge", ["Projects to merge"], callback=tools_table_merge_call, height=150, width=600)
+            add_spacing(count=3)  
+            add_button("tools_merge_projects", callback=tools_merge_projects_call, label="Merge projects")
             add_spacing(count=3)            
             add_drawing("hline4", width=800, height=1)
             draw_line("hline4", [0, 0], [800, 0], [255, 0, 0, 255], 1)            
@@ -852,10 +915,16 @@ with window("mainWin"):
             add_same_line(spacing=5)
             add_label_text("tools_project_name", label="")
             add_spacing(count=3)
-            add_text("Text operations:")
+            add_button("tools_reindex_project", callback=tools_reindex_project_call, label="Reindex wavs")  
+            add_same_line(spacing=10)
+            add_input_text("tools_input_reindex", label="New starting index", width=75, default_value="1000")
+            add_spacing(count=3)
+            add_text("Text operations:")            
             add_spacing(count=3)
             add_button("tools_format_text", callback=tools_format_text_call, label="Trim text and\nadd '~' endchar")  
             add_spacing(count=3)
+            add_button("tools_export_sets", callback=tools_export_sets_call, label="Export training, validation,\nand waveglow csv files")  
+            add_spacing(count=3)            
             add_text("Wav operations:")
             add_spacing(count=3)
             add_checkbox("tools_compress", default_value=0, label="Add compression with -10dB threshold?") 
@@ -864,9 +933,13 @@ with window("mainWin"):
             add_spacing(count=3)
             add_button("tools_process_wavs", callback=tools_process_wavs_call, label="Process wavs")  
             add_spacing(count=3)
-            add_button("tools_export_sets", callback=tools_export_sets_call, label="Export training, validation,\nand waveglow csv files")  
-            add_spacing(count=3)
             add_label_text("tools_status", label="")
+        with tab("tab5", label="Options"):
+            add_spacing(count=5)  
+            add_combo("Themes", items=themes, width=100, default_value="Dark", callback=apply_theme_call)
+            add_spacing(count=5)
+            add_slider_int("Font Scale", default_value=100, min_value=50, max_value=300, width=200, callback=apply_font_scale_call)
+           
 
 
 start_dearpygui(primary_window="mainWin")
