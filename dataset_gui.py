@@ -430,14 +430,17 @@ def tools_process_wavs_call(sender, data):
         set_value("tools_status", "Resampling")
         tfm.rate(22050) 
 
-    os.mkdir(pname + '\\processed')
-    os.mkdir(pname + '\\processed\\wavs')
+    if not os.path.exists(pname + '\\processed'):
+        os.mkdir(pname + '\\processed')
+    if not os.path.exists(pname + '\\processed\\wavs'):
+        os.mkdir(pname + '\\processed\\wavs')
+
     with open(pname + "\\output.csv", 'r') as f:      
         lines = f.readlines()
         for line in lines:
             wav_path, text = line.split('|') 
             processedpath = pname + '\\processed\\' + wav_path
-            text = text.strip()
+            text = text.strip() #remove \r\n
             tfm.build_file(pname + '\\' + wav_path, processedpath)
             print(f"Processing {wav_path}")
             set_value("tools_status", "Processing {}".format(wav_path))
@@ -447,7 +450,7 @@ def tools_process_wavs_call(sender, data):
                 w.export(processedpath, format='wav')
 
         print("Done processing wavs!")
-        set_value("tools_status", "Processing wavs done!")
+        set_value("tools_status", "Done processing wavs. Output at {}/processed/wavs.".format(pname))
         print('\a') #system beep 
 
 
@@ -462,10 +465,68 @@ def tools_table_combine_call(sender, data):
     pass
 
 def tools_export_sets_call(sender, data):
-    pass
+    pname = get_value("tools_project_name")
+    if not pname:
+        return
+
+    training_set = []
+    val_set = []
+    waveglow_set = []
+
+    if not os.path.exists(pname + '\\processed'):
+        os.mkdir(pname + '\\processed')    
+
+    with open(pname + "\\output.csv", 'r') as f:      
+        lines = f.readlines()
+        for i, line in enumerate(lines):
+            wav_path, text = line.split('|') 
+            if i < 50:
+                val_set.append(line)
+                waveglow_set.append(wav_path)
+            else:
+                training_set.append(line)
+                waveglow_set.append(wav_path)
+
+    with open(pname + "\\training.csv", 'w') as f:
+        for line in training_set:
+            f.write(line)
+    with open(pname + "\\validation.csv", 'w') as f:
+        for line in val_set:
+            f.write(line)
+    with open(pname + "\\waveglow_training.csv", 'w') as f:
+        newline = ''
+        for line in waveglow_set:
+            f.write(newline + line)        
+            newline = '\n'
+
+        print("Done exporting sets!")
+        set_value("tools_status", "Done exporting sets. Output at {}/.".format(pname))
+        print('\a') #system beep 
 
 def tools_format_text_call(sender, data):
-    pass
+    pname = get_value("tools_project_name")
+    if not pname:
+        return
+    newcsv = []
+
+    if not os.path.exists(pname + '\\processed'):
+        os.mkdir(pname + '\\processed')    
+    with open(pname + "\\output.csv", 'r') as f:      
+        lines = f.readlines()
+        for line in lines:
+            wav_path, text = line.split('|') 
+            text = text.strip() + '~'
+            newcsv.append(wav_path + '|' + text)
+
+    with open(pname + '\\processed\output.csv', 'w') as f:
+        newline = ''
+        for line in newcsv:
+            f.write(newline + line)
+            newline = '\n'
+
+        print("Done formatting text!")
+        set_value("tools_status", "Done formatting text. Output at {}/processed/output.csv".format(pname))
+        print('\a') #system beep 
 
 # Main functions
 themes = ["Dark", "Light", "Classic", "Dark 2", "Grey", "Dark Grey", "Cherry", "Purple", "Gold", "Red"]
@@ -479,7 +540,7 @@ def apply_font_scale_call(sender, data):
 
 def render_call(sender, data):
     #mouse        
-    if is_mouse_button_dragging(0,.1):
+    if is_mouse_button_dragging(0,.01):
         mouse_pos = get_drawing_mouse_pos()   
         if is_item_hovered("current_plot_drawing_new"):    
             if proofreader.get_drag_in_current() == None:
@@ -773,7 +834,17 @@ with window("mainWin"):
             add_spacing(count=5)
             add_slider_int("Font Scale", default_value=100, min_value=50, max_value=300, width=200, callback=apply_font_scale_call)
             add_spacing(count=5)
-            add_text("Choose project directory to edit:")
+            add_drawing("hline3", width=800, height=1)
+            draw_line("hline3", [0, 0], [800, 0], [255, 0, 0, 255], 1)  
+            add_text("COMBINE PROJECT FOLDERS INTO SINGLE PROJECT:")
+            add_spacing(count=5)
+            add_button("tools_open_project_combine", callback=tools_open_project_combine_call, label="Add project")
+            add_spacing(count=3)
+            add_table("tools_table_combine", ["Projects to combine"], callback=tools_table_combine_call, height=100, width=200)
+            add_spacing(count=3)            
+            add_drawing("hline4", width=800, height=1)
+            draw_line("hline4", [0, 0], [800, 0], [255, 0, 0, 255], 1)            
+            add_text("WAV AND TEXT FORMATTING\nChoose project directory:")
             add_spacing(count=3)
             add_button("tools_open_project", callback=tools_open_project_call, label="Open project")  
             add_same_line(spacing=10)
@@ -787,22 +858,13 @@ with window("mainWin"):
             add_spacing(count=3)
             add_text("Wav operations:")
             add_spacing(count=3)
-            add_checkbox("tools_compress", default_value=1, label="Add compression with -10dB threshold?") 
+            add_checkbox("tools_compress", default_value=0, label="Add compression with -10dB threshold?") 
             add_checkbox("tools_resample", default_value=1, label="Resample to 22050 rate?") 
             add_checkbox("tools_trimadd", default_value=1, label="Trim audio and pad with silences?") 
             add_spacing(count=3)
             add_button("tools_process_wavs", callback=tools_process_wavs_call, label="Process wavs")  
             add_spacing(count=3)
             add_button("tools_export_sets", callback=tools_export_sets_call, label="Export training, validation,\nand waveglow csv files")  
-            add_spacing(count=3)
-            add_drawing("hline3", width=800, height=1)
-            draw_line("hline3", [0, 0], [800, 0], [255, 0, 0, 255], 1)  
-            add_spacing(count=3)
-            add_text("Combine project folders into one project:")
-            add_same_line(spacing=10)
-            add_button("tools_open_project_combine", callback=tools_open_project_combine_call, label="Add project")
-            add_spacing(count=3)
-            add_table("tools_table_combine", ["Projects to combine"], callback=tools_table_combine_call, height=100, width=200)
             add_spacing(count=3)
             add_label_text("tools_status", label="")
 
