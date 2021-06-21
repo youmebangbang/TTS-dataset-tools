@@ -458,6 +458,9 @@ def tools_process_wavs_call(sender, data):
 def tools_open_project_merge_call(sender, data):
     select_directory_dialog(add_tools_project_merge_call)
 
+def tools_clear_merge_projects_call(sender, data):
+    clear_table("tools_table_merge")
+
 def add_tools_project_merge_call(sender, data):
     # add project to table list
     project_path = data[0] + '\\' + data[1]
@@ -905,6 +908,8 @@ with window("mainWin"):
             add_button("tools_open_project_merge", callback=tools_open_project_merge_call, label="Add project")
             add_spacing(count=3)
             add_table("tools_table_merge", ["Projects to merge"], callback=tools_table_merge_call, height=150, width=600)
+            add_spacing(count=3)             
+            add_button("tools_clear_merge_projects", callback=tools_clear_merge_projects_call, label="Clear table")            
             add_spacing(count=3) 
             add_input_text("tools_input_wavfolder", width=100, label="Change wav folder path name in csv? (Leave blank to skip. Example: attenborough/wavs)") 
             add_spacing(count=3)             
@@ -920,7 +925,7 @@ with window("mainWin"):
             add_same_line(spacing=5)
             add_label_text("tools_project_name", label="")
             add_spacing(count=3)
-            add_button("tools_reindex_project", callback=tools_reindex_project_call, label="Reindex wavs")  
+            add_button("tools_reindex_project", callback=tools_reindex_project_call, label="Reindex wavs\nand text")  
             add_same_line(spacing=10)
             add_input_text("tools_input_reindex", label="New starting index", width=75, default_value="1000")
             add_spacing(count=3)
