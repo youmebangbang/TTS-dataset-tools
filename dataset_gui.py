@@ -465,33 +465,39 @@ def add_tools_project_merge_call(sender, data):
 
 def tools_merge_projects_call(sender, data):
     table = get_table_data("tools_table_merge")
+    if not table:
+        print("Table is empty")
+        return
+    wavfolder = get_value("tools_input_wavfolder")
     if not os.path.exists("merged"):
         os.mkdir("merged")
     if not os.path.exists("merged\\wavs"):
         os.mkdir("merged\\wavs")
     else:
-        os.rmdir("merged\\wavs")
+        shutil.rmtree("merged\\wavs")
         os.mkdir("merged\\wavs")
 
     with open("merged\\output.csv", 'w') as f:
         newline = ''
+        new_wav_path = ''
+        count = 0
         for row in table:
             with open(row[0] + '\\output.csv') as p:
                 lines = p.readlines()
                 for line in lines:
                     wav_path, text = line.split('|') 
-                    text = text.strip()
-                    f.write(newline + wav_path + '|' + text)
-                    newline = '\n'
-                    #check to see if wav file already exists
-                    if os.path.exists("merged" + '\\' + wav_path):
-                        set_value("tools_status", "Error, duplicate wav path names with {} . Exiting merging.".format(wav_path))
-                        print("error duplicate wav paths!")
-                        return
+                    if wavfolder:
+                        #change wav_path name
+                        # wav_file_name = os.path.basename(wav_path)
+                        new_wav_path = wavfolder + '\\' + str(count) + '.wav'
+                        text = text.strip()
+                        f.write(newline + new_wav_path + '|' + text)
                     else:
-                        #copy wav to new directory
-                        copyfile(row[0] + '\\' + wav_path, "merged" + '\\' + wav_path)
-
+                        text = text.strip()
+                        f.write(newline + 'wavs\\' + str(count) + '.wav' + '|' + text)
+                    newline = '\n'
+                    copyfile(row[0] + '\\' + wav_path, "merged\\wavs\\" + str(count) + '.wav')
+                    count += 1                    
         print("Done merging!")
         set_value("tools_status", "Done merging projects. Output at /merged")
         print('\a') #system beep 
@@ -508,9 +514,6 @@ def tools_export_sets_call(sender, data):
     training_set = []
     val_set = []
     waveglow_set = []
-
-    if not os.path.exists(pname + '\\processed'):
-        os.mkdir(pname + '\\processed')    
 
     with open(pname + "\\output.csv", 'r') as f:      
         lines = f.readlines()
@@ -890,8 +893,8 @@ with window("mainWin"):
                 add_button("next_remove", callback=next_remove_call, label="Remove entry!")            
             # proofreader.next_plot_drawing_set_point(0)
 
-        with tab("tab3", label="Increase Dataset"):
-            add_spacing(count=5)           
+        # with tab("tab3", label="Increase Dataset"):
+        #     add_spacing(count=5)           
 
         with tab("tab4", label="Other Tools"):
             add_spacing(count=5)
@@ -902,7 +905,9 @@ with window("mainWin"):
             add_button("tools_open_project_merge", callback=tools_open_project_merge_call, label="Add project")
             add_spacing(count=3)
             add_table("tools_table_merge", ["Projects to merge"], callback=tools_table_merge_call, height=150, width=600)
-            add_spacing(count=3)  
+            add_spacing(count=3) 
+            add_input_text("tools_input_wavfolder", width=100, label="Change wav folder path name in csv? (Leave blank to skip. Example: attenborough/wavs)") 
+            add_spacing(count=3)             
             add_button("tools_merge_projects", callback=tools_merge_projects_call, label="Merge projects")
             add_spacing(count=3)            
             add_drawing("hline4", width=800, height=1)
