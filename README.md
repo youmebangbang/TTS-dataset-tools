@@ -61,11 +61,15 @@ edit your bashrc file by typing: sudo nano ~/.bashrc
 
 Then add the line at the end with your info depending where your package was installed: 
 
-export LD_LIBRARY_PATH=[homepath]/anaconda3/envs/[yourenv]/lib/
+export LD_LIBRARY_PATH="/[yourhomepath]/anaconda3/envs/[yourenv]/lib/"
 
 OR
 
-export LD_LIBRARY_PATH=[homepath]/.conda/envs/[yourenv]/lib/
+export LD_LIBRARY_PATH="/[yourhomepath]/.conda/envs/[yourenv]/lib/"
+
+OR if base environment
+
+export LD_LIBRARY_PATH="/[yourhomepath]/anaconda3/lib/"
 
 Press CTRL+o to export the updated file. Then CTRL+x to exit.
 
