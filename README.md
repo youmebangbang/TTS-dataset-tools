@@ -13,12 +13,14 @@ Using a VPN will interfere with long Google Speech to Text API requests.
 
 ![Dataset GUI](https://github.com/youmebangbang/Automated-TTS-dataset-builder/blob/master/example2.png)
 
+Using the older version of dearpygui at the momement, I will migrate eventually.
+
 # Windows Setup
 pip install numpy
 
 pip install pydub
 
-pip install dearpygui
+pip install dearpygui==0.6.415
 
 pip install google-cloud-speech
 
@@ -43,7 +45,7 @@ test installation:  python -m aeneas.diagnostics
 
 pip install pydub
 
-pip install dearpygui
+pip install dearpygui==0.6.415
 
 pip install google-cloud-speech
 
