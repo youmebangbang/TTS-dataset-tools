@@ -3,7 +3,7 @@ Transcribe audio via Google Speech to Text API with speaker separation (diarizat
 
 For Google Speech to Text API you will need a Google Cloud Platform account. Your $GOOGLE_APPLICATION_CREDENTIALS env variable must point to your credentials JSON file path. Google is offering $300 worth of service and 3 months free on new accounts.
 
-Run dataset_gui.py for GUI tools. 
+Run tools.py for GUI tools. 
 
 Current limitations are that you will need to adjust column width of the proofreading section and when navigating entries you must take the focus off the current and next input text boxes or the text box will not update. Next version of dearpy gui will solve these issues.
 
