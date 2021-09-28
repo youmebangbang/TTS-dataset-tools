@@ -79,7 +79,7 @@ Type source ~/.bashrc to enable the new path.
 
 # Usage
 
-Video tutorial coming soon!
+Video tutorial: https://www.youtube.com/watch?v=tE7pUi2XEJE
 
 # Recommendations
 
