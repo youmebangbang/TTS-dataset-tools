@@ -16,19 +16,19 @@ Using a VPN will interfere with long Google Speech to Text API requests.
 Using the older version of dearpygui at the momement, I will migrate eventually.
 
 # Windows Setup
-pip install numpy
+pip install numpy --user
 
-pip install pydub
+pip install pydub --user
 
-pip install dearpygui==0.6.415
+pip install dearpygui==0.6.415 --user
 
-pip install google-cloud-speech
+pip install google-cloud-speech --user
 
-pip install google-cloud-storage
+pip install google-cloud-storage --user
 
-pip install simpleaudio
+pip install simpleaudio --user
 
-pip install sox
+pip install sox --user
 
 # Linux Setup
 Linux environment is recommended for Aeneas option, in windows aeneas will not be able to make longer cuts due to memory issues. 
@@ -37,23 +37,23 @@ wget https://raw.githubusercontent.com/readbeyond/aeneas/master/install_dependen
 
 bash install_dependencies.sh
 
-pip install numpy
+pip install numpy --user
 
-pip install aeneas
+pip install aeneas --user
 
 test installation:  python -m aeneas.diagnostics
 
-pip install pydub
+pip install pydub --user
 
-pip install dearpygui==0.6.415
+pip install dearpygui==0.6.415 --user
 
-pip install google-cloud-speech
+pip install google-cloud-speech --user
 
-pip install google-cloud-storage
+pip install google-cloud-storage --user
 
-pip install simpleaudio
+pip install simpleaudio --user
 
-pip install sox
+pip install sox --user
 
 If you get libpython error: 
 
