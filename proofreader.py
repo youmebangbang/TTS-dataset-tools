@@ -56,25 +56,24 @@ class Proofreader:
     def autosave(self):
         if self.get_current() == None:
             return 
-        name = get_value("proofread_project_name")
-        if name:
-            newline = ""
-            with open("{}/{}".format(self.get_project_path(), "autosave.csv"), 'w') as csv_file:
-                table = get_table_data("table_proofread")
-                for row in table:
-                    csv_file.write("{}{}|{}".format(newline, row[0], row[1]))
-                    newline = "\n"
-            set_value("proofread_status", "{}/{} saved".format(self.get_project_path(), "autosave.csv"))            
-            #logging
-            with open("{}/logfile.txt".format(self.get_project_path()), 'a') as log_file:
-                t = datetime.datetime.now()
-                tt = t.strftime("%c")
-                row = self.get_selected_row()
-                last_wav = get_table_item("table_proofread", row, 0)
-                log_file.write("\n{}: Saved {} Last item selected: {}".format(tt, "autosave.csv", last_wav))            
+
+        newline = ""
+        with open("{}/{}".format(self.get_project_path(), "autosave.csv"), 'w') as csv_file:
+            table = get_table_data("table_proofread")
+            for row in table:
+                csv_file.write("{}{}|{}".format(newline, row[0], row[1]))
+                newline = "\n"
+        set_value("proofread_status", "{}/{} saved".format(self.get_project_path(), "autosave.csv"))            
+        #logging
+        with open("{}/logfile.txt".format(self.get_project_path()), 'a') as log_file:
+            t = datetime.datetime.now()
+            tt = t.strftime("%c")
+            row = self.get_selected_row()
+            last_wav = get_table_item("table_proofread", row, 0)
+            log_file.write("\n{}: Saved {} Last item selected: {}".format(tt, "autosave.csv", last_wav))            
 
         # save_csv_proofread_call("", "autosave")
-        print("autosaving to autosave.csv")
+        print("autosaving to {}".format(self.get_project_path() + "/autosave.csv"))
 
     def scroll_up(self):
         if is_item_active("current_input_text") or is_item_active("next_input_text"):
