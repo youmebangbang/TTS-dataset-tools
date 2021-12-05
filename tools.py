@@ -471,7 +471,6 @@ def tools_merge_projects_call(sender, data):
     if not table:
         print("Table is empty")
         return
-    wavfolder = get_value("tools_input_wavfolder")
     if not os.path.exists("merged"):
         os.mkdir("merged")
     if not os.path.exists("merged\\wavs"):
@@ -489,15 +488,8 @@ def tools_merge_projects_call(sender, data):
                 lines = p.readlines()
                 for line in lines:
                     wav_path, text = line.split('|') 
-                    if wavfolder:
-                        #change wav_path name
-                        # wav_file_name = os.path.basename(wav_path)
-                        new_wav_path = wavfolder + '\\' + str(count) + '.wav'
-                        text = text.strip()
-                        f.write(newline + new_wav_path + '|' + text)
-                    else:
-                        text = text.strip()
-                        f.write(newline + 'wavs\\' + str(count) + '.wav' + '|' + text)
+                    text = text.strip()
+                    f.write(newline + 'wavs\\' + str(count) + '.wav' + '|' + text)
                     newline = '\n'
                     copyfile(row[0] + '\\' + wav_path, "merged\\wavs\\" + str(count) + '.wav')
                     count += 1                    
@@ -910,9 +902,7 @@ with window("mainWin"):
             add_table("tools_table_merge", ["Projects to merge"], callback=tools_table_merge_call, height=150, width=600)
             add_spacing(count=3)             
             add_button("tools_clear_merge_projects", callback=tools_clear_merge_projects_call, label="Clear table")            
-            add_spacing(count=3) 
-            add_input_text("tools_input_wavfolder", width=100, label="Change wav folder path name in csv? (Leave blank to skip. Example: attenborough/wavs)") 
-            add_spacing(count=3)             
+            add_spacing(count=3)            
             add_button("tools_merge_projects", callback=tools_merge_projects_call, label="Merge projects")
             add_spacing(count=3)            
             add_drawing("hline4", width=800, height=1)
