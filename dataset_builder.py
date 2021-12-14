@@ -199,16 +199,16 @@ class Dataset_builder:
                     for result in response.results:
                         text = result.alternatives[0].transcript
 
-                    # replace some symbols and google API word choice
-                    text = text.replace("%", " percent")
-                    text = text.replace("cuz", "cause")
-                    text = text.replace("-", " ")
-                    text = text.replace("&", "and")
-                    print(text)
-                    set_value("label_build_status", text)
+                        # replace some symbols and google API word choice
+                        text = text.replace("%", " percent")
+                        text = text.replace("cuz", "cause")
+                        text = text.replace("-", " ")
+                        text = text.replace("&", "and")
+                        print(text)
+                        set_value("label_build_status", text)
 
-                    f.write("{}wavs/{}.wav|{}".format(newline, x, text))
-                    newline = '\n'
+                        f.write("{}wavs/{}.wav|{}".format(newline, x, text))
+                        newline = '\n'
             print('\a') #system beep 
             set_value("label_build_status", "Done!")
             print("Done running builder!")
