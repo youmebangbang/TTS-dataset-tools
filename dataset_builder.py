@@ -197,10 +197,10 @@ class Dataset_builder:
                     response = operation.result(timeout=28800)    
 
                     text = ""
-                    newspace = ""
+       
                     for result in response.results:
-                        text = text + newspace + result.alternatives[0].transcript
-                        newspace = " "
+                        text = text + result.alternatives[0].transcript
+                        
 
                     # replace some symbols and google API word choice
                     text = text.replace("%", " percent")
