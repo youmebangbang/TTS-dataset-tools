@@ -28,6 +28,8 @@ pip install google-cloud-storage --user
 
 pip install simpleaudio --user
 
+*If you can't build simpleaudio make sure you have gcc installed: sudo apt-get update , sudo apt-get install build-essentials
+
 pip install sox --user
 
 # Linux Setup
