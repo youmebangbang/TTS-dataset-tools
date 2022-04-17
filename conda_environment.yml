@@ -1,0 +1,16 @@
+name: ttstools
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - pip
+  - google-cloud-speech
+  - google-cloud-storage
+  - numpy
+  - pydub
+  - sox
+  - pip:
+    - dearpygui==0.6.415
+    - simpleaudio
+    - sox
